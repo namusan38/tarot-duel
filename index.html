@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>タロット・デュエル</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#16152b;--bg2:#262248;--gold:#d4b062;--paper:#ece1c6;--ink:#2a2438;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(ellipse at 50% 0,var(--bg2),var(--bg) 70%);color:var(--paper);font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;-webkit-tap-highlight-color:transparent}
+#app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding:6px 8px;gap:6px}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border:1px solid #5b5282;border-radius:8px;font-weight:700}
+.bar.t{outline:2px solid var(--gold)}
+.bar small{font-weight:500;opacity:.8}
+.field{display:flex;gap:6px;min-height:108px}.u svg{align-self:center}
+.u{flex:1;max-width:25%;background:var(--paper);color:var(--ink);border-radius:6px;padding:5px 3px;text-align:center;border:2px solid transparent;display:flex;flex-direction:column;justify-content:space-between;font-size:13px}
+.u b{font-size:14px}.u .r{font-size:11px;opacity:.7}.u .st{font-size:12px;font-weight:700}.u .fl{font-size:10px;min-height:12px;color:#7a2d3a}
+.u{transition:transform .25s}.u.tp{transform:rotate(90deg) scale(.8);opacity:.85}
+.u.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.u.rdy{border-color:#5a8f5a}
+.tg{outline:3px dashed var(--gold);outline-offset:1px}
+.log{font-size:12px;opacity:.85;min-height:48px;line-height:1.5;padding:0 4px}
+.info{font-size:12.5px;line-height:1.55;background:#1d1a38;border:1px solid #4a4272;border-radius:8px;padding:8px 10px;flex:1;overflow:auto;min-height:70px}
+.info i,#ov i{opacity:.65;font-size:11px}
+.hand{display:flex;gap:6px;overflow-x:auto;padding:4px 2px}
+.c .nm{font-size:11px}.c svg{align-self:center}
+.c{flex:0 0 76px;height:112px;background:var(--paper);color:var(--ink);border-radius:6px;padding:5px;font-size:12px;display:flex;flex-direction:column;justify-content:space-between;border:2px solid transparent;border-bottom:5px solid var(--sc,#888)}
+.c.sel{border-color:var(--gold);transform:translateY(-4px)}
+.c.no{opacity:.45}
+.c .co{font-weight:700;font-size:13px}.c .nm{font-weight:700;line-height:1.25}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-weight:700;flex:1;padding:11px 6px;border-radius:8px;border:1px solid var(--gold);background:#2e2956;color:var(--paper)}
+button.p{background:var(--gold);color:var(--ink)}
+button:disabled{opacity:.4}
+#ov{position:fixed;inset:0;background:rgba(14,13,30,.95);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+#ov>div{max-width:440px;width:100%;line-height:1.7;font-size:14px}
+#ov h1{font-size:26px;margin:0 0 8px;color:var(--gold)}
+#ov button{margin-top:10px;width:100%}
+#ov p{font-size:13px;line-height:1.6;margin:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.ch{padding:6px 10px;border:1px solid #5b5282;border-radius:14px;font-size:13px}
+.ch.on{background:var(--gold);color:var(--ink)}
+.snd{float:right}.sb{flex:none;width:auto;padding:3px 8px;font-size:11px;margin-left:4px}#ov .sb{width:auto;margin:6px 6px 0 0;padding:4px 10px}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+.fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.fx i{position:absolute}
+.fl{inset:0;background:var(--fc);opacity:0;animation:flash .6s ease-out}
+.fxm .fl{animation-duration:.4s}
+@keyframes flash{0%{opacity:.5}100%{opacity:0}}
+.ring{width:40px;height:40px;border:4px solid var(--fc);border-radius:50%;opacity:0;animation:ring .9s ease-out .3s}
+.r2{animation-delay:.45s;border-width:2px}
+@keyframes ring{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(12)}}
+.ray{width:150vmax;height:150vmax;background:repeating-conic-gradient(var(--fc) 0 5deg,transparent 5deg 20deg);-webkit-mask-image:radial-gradient(circle,#000,transparent 55%);mask-image:radial-gradient(circle,#000,transparent 55%);opacity:0;animation:ray 1.2s ease-out .25s}
+@keyframes ray{0%{opacity:.7;transform:rotate(0) scale(.15)}100%{opacity:0;transform:rotate(50deg) scale(1)}}
+.fcard{background:var(--paper);color:var(--ink);border:3px solid var(--fc);border-radius:10px;padding:10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 0 28px var(--fc),0 0 80px var(--fc);opacity:0;font-size:15px}
+.fcard small{opacity:.7}
+.fxM .fcard{animation:slam 1.3s ease-out}
+@keyframes slam{0%{opacity:0;transform:translateY(-110vh) scale(2.4) rotate(-14deg)}24%{opacity:1;transform:translateY(0) scale(1.18) rotate(0)}32%{transform:translateY(0) scale(.94) rotate(0)}40%{transform:translateY(0) scale(1) rotate(0)}82%{opacity:1;transform:translateY(0) scale(1) rotate(0)}100%{opacity:0;transform:translateY(0) scale(1.25) rotate(0)}}
+.fxm .fcard{animation:spin 1.2s ease-out}
+@keyframes spin{0%{opacity:0;transform:translateX(calc(var(--dx)*-80vw)) rotate(-540deg) scale(.4)}30%{opacity:1;transform:translateX(0) rotate(0) scale(1.12)}45%{transform:translateX(0) rotate(0) scale(1)}80%{opacity:1;transform:translateX(0) rotate(0) scale(1)}100%{opacity:0;transform:translateY(-25vh) rotate(0) scale(.6)}}
+.fban{position:absolute;top:18%;font-size:32px;font-weight:700;letter-spacing:.25em;color:#fff;text-shadow:0 0 10px var(--fc),0 0 28px var(--fc);opacity:0;animation:ban 1.25s ease-out .15s}
+@keyframes ban{0%{opacity:0;transform:scale(2.2)}18%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+.pt{width:9px;height:9px;border-radius:50%;background:var(--fc);opacity:0;animation:pt .9s ease-out calc(.3s + var(--dl)) forwards}
+@keyframes pt{0%{opacity:1;transform:rotate(var(--a)) translateX(0) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--r)) scale(.2)}}
+.fxw .pt{border-radius:2px;animation-name:rise}
+@keyframes rise{0%{opacity:1;transform:translate(var(--x),40px)}100%{opacity:0;transform:translate(var(--x),-260px) scale(.3)}}
+.fxs .pt{width:70px;height:3px;border-radius:2px;animation-name:streak}
+@keyframes streak{0%{opacity:0;transform:translate(-55vw,var(--y))}20%{opacity:1}100%{opacity:0;transform:translate(55vw,var(--y))}}
+.fxp .pt{width:12px;height:12px;border-radius:3px;animation-name:fall}
+@keyframes fall{0%{opacity:1;transform:translate(var(--x),-55vh) rotate(0)}85%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y2)) rotate(300deg)}}
+#app.shake{animation:shake .45s .3s}
+@keyframes shake{0%,100%{transform:translate(0)}20%{transform:translate(-6px,4px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,-3px)}80%{transform:translate(4px,3px)}}
+@media(prefers-reduced-motion:reduce){#fx{display:none}#app.shake{animation:none}}
+.dx{padding:8px 10px;border:1px solid #4a4272;border-radius:8px;margin:0 0 8px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<symbol id="sw" viewBox="0 0 14 16"><path d="M3 14L11 3M11 3H6M11 3v5"/></symbol>
+<symbol id="sc" viewBox="0 0 14 16"><path d="M2 2h10l-1 6a4 4 0 01-8 0zM7 12v2M4 14h6"/></symbol>
+<symbol id="ss" viewBox="0 0 14 16"><path d="M7 1v10M3.5 11h7M7 11v4"/></symbol>
+<symbol id="sp" viewBox="0 0 14 16"><circle cx="7" cy="8" r="6"/><path d="M7 3.5L9 11.5 3 6.5h8L5 11.5z"/></symbol></g></defs></svg>
+<div id="fx"></div><div id="app"></div><div id="ov"></div>
+<script>
+const SU={w:{n:'ワンド',el:'火',role:'攻撃・速攻・積極性',c:'#d8503f'},c:{n:'カップ',el:'水',role:'回復・支援・調和',c:'#3f7fd8'},s:{n:'ソード',el:'風',role:'妨害・戦術・判断',c:'#8e97a8'},p:{n:'ペンタクル',el:'地',role:'防御・資源・持久力',c:'#4f9a5a'}};
+const $=s=>document.querySelector(s),sl=ms=>new Promise(r=>setTimeout(r,ms));
+const MAJ=[
+['fool','愚者','0',1,1,2,'s','en','召喚時、今ターンの気力+1','自由・新たな一歩','崖の縁を歩む旅人と犬'],
+['magician','魔術師','I',2,2,2,'w','at','召喚時、敵ユニット（いなければ相手）に2ダメージ','創造・意志の力','机上の4つの道具と掲げた杖'],
+['priestess','女教皇','II',2,1,3,'c','sh','召喚時、盾を得る','直感・秘められた知','二本の柱の間に座る女性'],
+['empress','女帝','III',2,1,3,'p','gr','自分のターン終了時、体力+1','豊穣・成長','麦畑と玉座の女性'],
+['emperor','皇帝','IV',4,3,5,'p','sh','他の味方の攻撃+1','統率・秩序','石の玉座に座る王'],
+['hierophant','教皇','V',3,2,4,'c','he','召喚時、味方全体の体力+2','導き・伝統','教えを授ける聖職者'],
+['lovers','恋人','VI',3,2,3,'c','dr','召喚時、ライフ+3','選択・結びつき','男女と天使'],
+['chariot','戦車','VII',3,3,3,'w','ex','突撃：召喚したターンから攻撃できる','意志・前進・勝利','戦車、御者、白と黒のスフィンクス'],
+['strength','力','VIII',3,3,4,'w','gr','受けるダメージ-1','忍耐・内なる力','獅子をなだめる女性'],
+['hermit','隠者','IX',2,2,2,'s','dr','召喚時、カードを1枚引く','内省・洞察','ランタンを掲げる老人'],
+['wheel','運命の輪','X',3,2,3,'p','en','終了時、攻撃+1か体力+2をランダムで得る','巡り・転機','回る輪と四つの存在'],
+['justice','正義','XI',3,3,3,'s','at','召喚時、ライフが相手より多ければ相手に3ダメージ、少なければ自分のライフ+3','公正・均衡','剣と天秤を持つ人物'],
+['hanged','吊るされた男','XII',2,1,4,'c','dr','召喚時、ライフ-2してカードを2枚引く','試練・視点の転換','逆さに吊られた男'],
+['death','死神','XIII',4,3,3,'s','ex','召喚時、敵の最も体力が高いユニット1体を破壊','終わりと再生','骸骨の騎士と旗'],
+['temperance','節制','XIV',2,1,3,'c','he','終了時、ライフ+1','調和・節度','二つの杯を行き来する水'],
+['devil','悪魔','XV',3,4,3,'p','at','召喚時、敵ユニット1体を封印','束縛・誘惑','鎖につながれた男女'],
+['tower','塔','XVI',3,4,2,'w','ex','倒れた時、敵全体に2ダメージ','崩壊・突然の変化','雷に打たれる塔'],
+['star','星','XVII',2,1,3,'c','gr','終了時、ランダムな味方1体の体力+1','希望・癒し','水を注ぐ女性と星'],
+['moon','月','XVIII',4,2,3,'s','sh','召喚時、敵ユニット全体を封印','不安・幻影','月と二匹の犬'],
+['sun','太陽','XIX',4,4,4,'w','gr','召喚時、味方全体の攻撃+1（永続）','活力・成功','太陽と白い馬の子供'],
+['judgement','審判','XX',4,3,3,'c','en','召喚時、倒れた味方を1体復活（体力2）','再生・目覚め','ラッパで甦る人々'],
+['world','世界','XXI',5,5,5,'p','dr','召喚時、味方全体に盾','完成・統合','月桂冠の輪と踊る人物']
+].map(([id,n,r,cost,atk,hp,su,cb,ab,mean,img])=>({id,n,r,cost,atk,hp,su,cb,ab,mean,img,k:'M'}));
+const MA={"fool": "<circle cx=\"29\" cy=\"10\" r=\"4\" fill=\"#d4b062\"/><path d=\"M3 35h20l5-9 9 9M16 17v10m-5-4h10\"/><circle cx=\"16\" cy=\"13\" r=\"3\"/>", "magician": "<path d=\"M8 12c0-5 8-5 12 0s12 5 12 0-8-5-12 0-12 5-12 0zM20 17v19M13 36h14\"/><circle cx=\"20\" cy=\"26\" r=\"2\" fill=\"#d4b062\"/>", "priestess": "<path d=\"M7 5v31M33 5v31\"/><circle cx=\"20\" cy=\"19\" r=\"8\" fill=\"#d4b062\"/><circle cx=\"24\" cy=\"17\" r=\"7\" fill=\"#ece1c6\" stroke=\"none\"/>", "empress": "<circle cx=\"20\" cy=\"14\" r=\"8\" fill=\"#d4b062\"/><path d=\"M20 22v14M13 30h14\"/>", "emperor": "<path d=\"M9 36V16h22v20zM9 16l4-8 7 6 7-6 4 8\"/>", "hierophant": "<path d=\"M20 4v32M14 10h12M11 18h18M8 26h24\"/>", "lovers": "<circle cx=\"12\" cy=\"27\" r=\"6\"/><circle cx=\"28\" cy=\"27\" r=\"6\" fill=\"#d4b062\"/><path d=\"M20 4l-7 12h14z\"/>", "chariot": "<path d=\"M7 14h26v10H7zM11 14l3-8h12l3 8\"/><circle cx=\"14\" cy=\"31\" r=\"5\"/><circle cx=\"26\" cy=\"31\" r=\"5\"/>", "strength": "<path d=\"M7 12c0-5 8-5 13 0s13 5 13 0-8-5-13 0-13 5-13 0z\"/><circle cx=\"20\" cy=\"29\" r=\"7\"/><path d=\"M16 27h.1M24 27h.1\"/>", "hermit": "<path d=\"M20 3v6\"/><rect x=\"13\" y=\"9\" width=\"14\" height=\"15\" rx=\"2\" fill=\"#d4b062\"/><path d=\"M8 37V14M20 24v13\"/>", "wheel": "<circle cx=\"20\" cy=\"20\" r=\"14\"/><circle cx=\"20\" cy=\"20\" r=\"4\"/><path d=\"M20 6v10M20 24v10M6 20h10M24 20h10M10 10l7 7M30 10l-7 7M10 30l7-7M30 30l-7-7\"/>", "justice": "<path d=\"M20 5v30M9 35h22M7 11h26M7 11l-4 12h8zM33 11l-4 12h8z\"/>", "hanged": "<path d=\"M6 5h28M20 5v9M20 14v14M12 21l8 4 8-4\"/><circle cx=\"20\" cy=\"33\" r=\"4\"/>", "death": "<circle cx=\"20\" cy=\"16\" r=\"10\"/><path d=\"M14 14h4M22 14h4M20 19v3M15 26v9M20 26v9M25 26v9\"/>", "temperance": "<path d=\"M5 6h12l-2 11H7zM23 23h12l-2 11h-8z\"/><path d=\"M13 17c1 7 9 2 12 6\" stroke=\"#3f7fd8\"/>", "devil": "<path d=\"M20 35L11.8 9.7 33.3 25.3 6.7 25.3 28.2 9.7z\"/><circle cx=\"20\" cy=\"21\" r=\"14\"/>", "tower": "<path d=\"M12 37V17h16v20zM10 17h20l-3-7H13z\"/><path d=\"M31 2l-6 11h6l-5 9\" stroke=\"#c0525c\"/>", "star": "<path d=\"M20 6L28.8 33.1 5.7 16.4h28.6L11.2 33.1z\" fill=\"#d4b062\"/>", "moon": "<circle cx=\"18\" cy=\"20\" r=\"13\" fill=\"#d4b062\"/><circle cx=\"25\" cy=\"17\" r=\"11\" fill=\"#ece1c6\" stroke=\"none\"/>", "sun": "<circle cx=\"20\" cy=\"20\" r=\"8\" fill=\"#d4b062\"/><path d=\"M20 3v5M20 32v5M3 20h5M32 20h5M8 8l3 3M29 29l3 3M32 8l-3 3M11 29l-3 3\"/>", "judgement": "<path d=\"M7 24h10l14-10v22L17 28H7z\"/><path d=\"M34 18l4-3M34 25h4M34 32l4 3\"/>", "world": "<ellipse cx=\"20\" cy=\"20\" rx=\"12\" ry=\"16\"/><path d=\"M20 8c5 5 5 19 0 24-5-5-5-19 0-24\"/><circle cx=\"20\" cy=\"20\" r=\"3\" fill=\"#d4b062\"/>"};
+function art(c,z=40){const col=c.k==='M'?'#2a2438':SU[c.s].c;let b='';
+ if(c.k==='M')b=MA[c.id];else{const i=+c.id.slice(1),s=c.s;
+  if(i>=10)b=`<use href="#s${s}" x="10" y="11" width="20" height="26"/><text x="20" y="9" text-anchor="middle" font-size="9" stroke="none" fill="${col}">${'PNQK'[i-10]}</text>`;
+  else{const n=i+1;if(n===1)b=`<use href="#s${s}" x="8" y="6" width="24" height="28"/>`;else{const r=Math.ceil(n/2),w=n>6?6:n>2?8:11,h=w*1.15;for(let k=0;k<n;k++){const row=k>>1,one=n%2&&k===n-1,x=one?20:(k%2?29:11),y=r>1?3+row*(34-h)/(r-1):14;b+=`<use href="#s${s}" x="${x-w/2}" y="${y}" width="${w}" height="${h}"/>`}}}}
+ return`<svg viewBox="0 0 40 40" width="${z}" height="${z}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none${c.rev?';transform:rotate(180deg)':''}">${b}</svg>`}
+let AC,MG,SG,BG,DG,DL,NB,SEon=true,BGon=true,bgT=null;
+const lbl=k=>k==='bgm'?`BGM${BGon?'●':'○'}`:k==='trk'?`♪${TK[cur].nm}`:`SE${SEon?'●':'○'}`;
+const sb=()=>`<button class="sb" data-snd="bgm">${lbl('bgm')}</button><button class="sb" data-snd="trk">${lbl('trk')}</button><button class="sb" data-snd="se">${lbl('se')}</button>`;
+function aud(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C();MG=AC.createGain();MG.gain.value=.8;MG.connect(AC.destination);SG=AC.createGain();SG.gain.value=.55;SG.connect(MG);BG=AC.createGain();BG.gain.value=.3;BG.connect(MG);DG=AC.createGain();DG.gain.value=.3;DG.connect(MG);DL=AC.createDelay();DL.delayTime.value=.36;const fb=AC.createGain();fb.gain.value=.35,wet=AC.createGain();wet.gain.value=.45;BG.connect(DL);DL.connect(fb);fb.connect(DL);DL.connect(wet);wet.connect(MG)}
+ if(AC.state==='suspended')AC.resume();if(BGon)bgStart()}
+function tn(f,t,d,ty,v,dst,f2){const o=AC.createOscillator(),g=AC.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(dst||SG);o.start(t);o.stop(t+d+.05)}
+function nz(t,d,v,fr,dst){if(!NB){NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const a=NB.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}const x=AC.createBufferSource();x.buffer=NB;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=fr;const g=AC.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);x.connect(f);f.connect(g);g.connect(dst||SG);x.start(t);x.stop(t+d+.05)}
+function sfx(n,x){if(!SEon||!AC||AC.state!=='running')return;const t=AC.currentTime;
+ switch(n){
+ case'tap':tn(700,t,.07,'triangle',.2);break;
+ case'sel':tn(880,t,.08,'sine',.22);tn(1320,t+.05,.12,'sine',.16);break;
+ case'no':tn(160,t,.18,'square',.12);break;
+ case'draw':nz(t,.09,.25,4000);break;
+ case'summon':[523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>tn(f,t+i*.07,.4,'sine',.22));tn(110,t,.4,'triangle',.45,0,55);break;
+ case'spell':if(x==='w'){nz(t,.4,.4,2500);tn(300,t,.35,'sawtooth',.12,0,900)}else if(x==='c'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tn(f,t+i*.09,.45,'sine',.2))}else if(x==='s'){nz(t,.3,.35,3500);tn(1200,t,.3,'triangle',.15,0,500)}else{tn(200,t,.3,'triangle',.4,0,140);tn(1000,t+.05,.35,'sine',.2)}break;
+ case'combo':[1046.5,1318.5,1568,2093].forEach((f,i)=>tn(f,t+.15+i*.06,.3,'sine',.14));break;
+ case'atk':nz(t,.15,.5,1200);tn(180,t,.2,'sawtooth',.2,0,60);break;
+ case'hit':nz(t,.2,.45,600);tn(120,t,.25,'sine',.5,0,45);break;
+ case'shield':tn(1400,t,.3,'triangle',.25);tn(2100,t+.04,.25,'sine',.15);break;
+ case'die':tn(440,t,.5,'sawtooth',.16,0,70);nz(t,.3,.3,400);break;
+ case'turn':if(x)tn(330,t,.4,'sine',.2);else{tn(659.25,t,.4,'sine',.25);tn(880,t+.15,.5,'sine',.25)}break;
+ case'win':[523.25,659.25,783.99,1046.5,783.99,1046.5,1318.5].forEach((f,i)=>tn(f,t+i*.13,.55,'triangle',.25));break;
+ case'lose':[392,349.23,311.13,261.63].forEach((f,i)=>tn(f,t+i*.28,.8,'sawtooth',.1,0,f*.95));break}}
+const BB=.55,PR=[0,1,0,2,0,3,2,0],BASS=[110,146.83,164.81,174.61],CHD=[[220,261.63,329.63],[293.66,349.23,440],[329.63,415.3,493.88],[220,261.63,349.23]],ARP=[[440,523.25,659.25],[440,587.33,698.46],[493.88,659.25,830.61],[440,523.25,698.46]],MEL=[659.25,698.46,659.25,830.61,880,698.46,830.61,659.25];
+function sched(b,t){const y=PR[b];tn(BASS[y],t,.55,'triangle',.5,BG);[1,2].forEach(k=>CHD[y].forEach(f=>tn(f,t+BB*k,.32,'triangle',.1,BG)));[0,1,2,1,2,1].forEach((j,i)=>tn(ARP[y][j],t+i*BB/2,.5,'sine',.12,BG));tn(MEL[b],t,1.3,'sine',.09,BG);tn(MEL[b]*2,t+.02,.8,'sine',.03,BG)}
+const FB=.4,FP=[0,1,2,3,0,1,4,3],FR=[146.83,116.54,130.81,110,98],FA=[[293.66,349.23,440,587.33],[233.08,293.66,349.23,466.16],[261.63,329.63,392,523.25],[220,277.18,329.63,440],[196,233.08,293.66,392]],FM=[[440,587.33,698.46,659.25],[587.33,698.46,587.33,466.16],[659.25,783.99,659.25,523.25],[554.37,659.25,880,659.25],[698.46,880,698.46,587.33],[587.33,698.46,466.16,587.33],[587.33,783.99,466.16,587.33],[554.37,659.25,880,659.25]];
+function sFF(b,t){const y=FP[b],r=FR[y],a=FA[y];for(let k=0;k<8;k++)tn(k%3===2?r*2:r,t+k*FB/2,.18,'sawtooth',.2,DG);for(let k=0;k<16;k++)tn(a[[0,1,2,3,2,1][k%6]],t+k*FB/4,.09,'square',.045,DG);FM[b].forEach((f,i)=>tn(f,t+i*FB,.38,'square',.07,DG));for(let k=0;k<4;k++){const u=t+k*FB;if(k%2)nz(u,.12,.35,1800,DG);else tn(150,u,.15,'sine',.5,DG,40)}for(let k=0;k<8;k++)nz(t+k*FB/2,.04,.12,8000,DG)}
+const DQB=.43,DR=[164.81,130.81,146.83,164.81,164.81,130.81,123.47,164.81],DC=[[329.63,392,493.88],[329.63,392,523.25],[293.66,369.99,440],[329.63,392,493.88],[329.63,392,493.88],[329.63,392,523.25],[246.94,311.13,369.99,440],[329.63,392,493.88]],DM=[[[0,659.25,.5],[.5,783.99,.5],[1,987.77,1],[2,880,.5],[2.5,783.99,.5],[3,659.25,1]],[[0,659.25,.5],[.5,783.99,.5],[1,1046.5,1],[2,987.77,.5],[2.5,783.99,.5],[3,659.25,1]],[[0,739.99,.5],[.5,880,.5],[1,1108.7,1],[2,987.77,.5],[2.5,880,.5],[3,739.99,1]],[[0,987.77,1.5],[1.5,880,.5],[2,783.99,1],[3,659.25,1]],[[0,783.99,.5],[.5,987.77,.5],[1,1318.5,1],[2,1174.7,.5],[2.5,987.77,.5],[3,783.99,1]],[[0,1046.5,.5],[.5,987.77,.5],[1,783.99,1],[2,880,.5],[2.5,783.99,.5],[3,659.25,1]],[[0,987.77,.5],[.5,880,.5],[1,739.99,1],[2,622.25,1],[3,739.99,1]],[[0,659.25,2],[2,783.99,1],[3,987.77,1]]];
+function sDQ(b,t){const DB=DQB,r=DR[b];[0,1,2,3].forEach(k=>tn(k%2?r*1.5:r,t+k*DB,.28,'sawtooth',.24,DG));[.5,1.5,2.5,3.5].forEach(o=>DC[b].forEach(f=>tn(f,t+o*DB,.14,'square',.04,DG)));DM[b].forEach(([o,f,l])=>{tn(f,t+o*DB,l*DB*.92,'square',.07,DG);tn(f/2,t+o*DB,l*DB*.92,'sawtooth',.04,DG)});[0,2].forEach(k=>tn(140,t+k*DB,.15,'sine',.5,DG,40));[1,3].forEach(k=>nz(t+k*DB,.12,.35,1800,DG));if(b===7)[3.5,3.75].forEach(o=>nz(t+o*DB,.08,.3,1800,DG))}
+let cur=0;const TK=[{nm:'神秘',n:8,d:BB*3,f:sched},{nm:'戦闘・疾走',n:8,d:FB*4,f:sFF},{nm:'戦闘・行進',n:8,d:DQB*4,f:sDQ}];
+function bgStart(){if(bgT||!AC)return;const T=TK[cur];let bar=0,nx=AC.currentTime+.15;bgT=setInterval(()=>{while(nx<AC.currentTime+.7){T.f(bar%T.n,nx);nx+=T.d;bar++}},150)}
+function bgStop(){clearInterval(bgT);bgT=null}
+document.addEventListener('click',e=>{aud();const b=e.target.closest('[data-snd]');if(b){if(b.dataset.snd==='bgm'){BGon=!BGon;BGon?bgStart():bgStop()}else if(b.dataset.snd==='trk'){cur=(cur+1)%TK.length;BGon=true;bgStop();bgStart()}else SEon=!SEon;document.querySelectorAll('[data-snd]').forEach(x=>{x.textContent=lbl(x.dataset.snd)})}else if(e.target.closest('#ov button,.ch'))sfx('tap')});
+document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume()});
+let G,D={m:[],s:[]},DB,uid=0;const SEEN=new Set();
+const foes=m=>G.p[1-m].field,mine=m=>G.p[m].field,nm=i=>i?'相手':'あなた';
+const CB={ex:['追加攻撃1回',u=>{u.atkLeft++}],gr:['攻撃+1・体力+1',u=>{u.atk++;u.hp++}],dr:['カードを1枚引く',u=>draw(u.s)],sh:['盾を得る',u=>{u.shield=true}],he:['ライフ+2',u=>{G.p[u.s].life+=2}],en:['次ターン気力+1',u=>{G.p[u.s].bonus++}],at:['攻撃+1',u=>{u.atk++}]};
+const rnd=a=>a[Math.random()*a.length|0];
+const ON={fool:m=>{G.p[m].en++},magician:m=>{const f=foes(m);hit({s:1-m,u:f.length?rnd(f):null},2)},priestess:(m,u)=>{u.shield=true},hierophant:m=>mine(m).forEach(u=>{u.hp+=2}),lovers:m=>{G.p[m].life+=3},hermit:m=>draw(m),justice:m=>{G.p[m].life>G.p[1-m].life?faceDmg(1-m,3):G.p[m].life+=3},hanged:m=>{faceDmg(m,2);draw(m,2)},death:m=>{const f=foes(m);if(f.length)dmgU(f.slice().sort((a,b)=>b.hp-a.hp)[0],1-m,99,1)},devil:m=>{const f=foes(m);if(f.length)rnd(f).frozen=true},moon:m=>foes(m).forEach(u=>{u.frozen=true}),sun:m=>mine(m).forEach(u=>{u.atk++}),judgement:m=>{const g=G.p[m].grave;if(g.length&&mine(m).length<4)spawn(m,g.pop(),2)},world:m=>mine(m).forEach(u=>{u.shield=true})};
+const END={empress:u=>{u.hp++},wheel:u=>{Math.random()<.5?u.atk++:u.hp+=2},temperance:u=>{G.p[u.s].life++},star:u=>{rnd(mine(u.s)).hp++}};
+const RK=['エース','2','3','4','5','6','7','8','9','10','ペイジ','ナイト','クイーン','キング'];
+const NT={w:'en',c:'ally',s:'eu',p:'ally'};
+function disc(m){const h=G.p[1-m].hand;if(h.length){const c=h.splice(Math.random()*h.length|0,1)[0];log(`${nm(1-m)}の「${c.n}」が捨てられた`)}}
+const NUM={w:p=>[`敵ユニットか相手に${p}ダメージ`,(m,t)=>hit(t,p)],c:p=>[`味方1体の体力+${p}`,(m,t)=>{t.u.hp+=p}],s:p=>[`敵ユニット1体の攻撃-${p}（永続）＋1枚引く`,(m,t)=>{t.u.atk=Math.max(0,t.u.atk-p);draw(m)}],p:p=>[`味方1体に盾＋体力+${p-1}`,(m,t)=>{t.u.shield=true;t.u.hp+=p-1}]};
+const COURT={
+w:[['ally','味方1体の攻撃+2（このターン）',(m,t)=>{t.u.tmp+=2},1],['ally','味方1体が追加で1回攻撃できる',(m,t)=>{t.u.atkLeft++},1],['self','敵ユニット全体に2ダメージ',m=>foes(m).slice().forEach(u=>dmgU(u,1-m,2))],['ally','味方1体の攻撃+3（永続）＋追加攻撃1回',(m,t)=>{t.u.atk+=3;t.u.atkLeft++},1]],
+c:[['self','ライフ+3',m=>{G.p[m].life+=3}],['self','味方全体の体力+2',m=>mine(m).forEach(u=>{u.hp+=2})],['self','カードを2枚引く',m=>draw(m,2)],['self','ライフ+5・味方全体の体力+2',m=>{G.p[m].life+=5;mine(m).forEach(u=>{u.hp+=2})}]],
+s:[['eu','敵ユニット1体を封印',(m,t)=>{t.u.frozen=true}],['self','相手の手札を1枚ランダムに捨てさせる',m=>disc(m)],['self','敵ユニット全体を封印',m=>foes(m).forEach(u=>{u.frozen=true})],['eu','敵ユニット1体を破壊',(m,t)=>dmgU(t.u,t.s,99,1)]],
+p:[['ally','味方1体に盾',(m,t)=>{t.u.shield=true}],['self','次のターンの気力+2',m=>{G.p[m].bonus+=2}],['self','味方全体に盾',m=>mine(m).forEach(u=>{u.shield=true})],['self','次のターンの気力+3・ライフ+3',m=>{G.p[m].bonus+=3;G.p[m].life+=3}]]};
+const NUMR={w:p=>[`敵ユニットか相手に${p+1}ダメージ、自分に1ダメージ`,(m,t)=>{hit(t,p+1);faceDmg(m,1)},'en',p+1],c:p=>[`敵ユニット1体に${p-1}ダメージ、自分のライフ+${p-1}`,(m,t)=>{hit(t,p-1);G.p[m].life+=p-1},'eu',0],s:p=>[`相手の手札を${Math.ceil(p/2)}枚ランダムに捨てさせる`,m=>{for(let k=0;k<Math.ceil(p/2);k++)disc(m)},'self',0],p:p=>[`次のターンの気力+${p-1}`,m=>{G.p[m].bonus+=p-1},'self',0]};
+const MINS=[];for(const s of 'wcsp')RK.forEach((r,i)=>{const n=`${SU[s].n}の${r}`;if(i<10){const v=i||10,cost=Math.ceil(v/3),p=cost+1+(i?0:1),[d,fx]=NUM[s](p);const[rd,rf,rt,rm]=NUMR[s](p);MINS.push({id:s+i,s,k:'m',n,cost,t:NT[s],d,fx,dmg:s==='w'?p:0,R:{t:rt,d:rd,fx:rf,dmg:rm,rdy:false}})}else{const[t,d,fx,rdy]=COURT[s][i-10],cost=i-9;MINS.push({id:s+i,s,k:'m',n,cost,t,d,fx,rdy,R:{cost:Math.max(1,cost-1),d:d+'（代償：自分に2ダメージ）',fx:(m,x)=>{faceDmg(m,2);fx(m,x)}}})}});
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const mkDeck=(m,s)=>shuf([...m.map(i=>({...MAJ[i]})),...shuf(MINS.filter(c=>s.includes(c.s))).slice(0,15).map(c=>({...c}))]);
+const pl=d=>({life:20,hand:[],deck:d,field:[],grave:[],max:0,en:0,bonus:0});
+const A=u=>u.atk+u.tmp+(u.c.id!=='emperor'&&G.p[u.s].field.some(x=>x.c.id==='emperor')?1:0);
+function log(m){G.log.push(m)}
+function draw(i,n=1){const p=G.p[i];for(let k=0;k<n;k++){if(p.deck.length){const c=p.deck.pop();if(c.k==='m'){c.rev=Math.random()<.4;if(c.rev)Object.assign(c,c.R)}p.hand.push(c);if(!i)sfx('draw')}else log(`${nm(i)}の山札が尽きた`)}}
+function newGame(){const am=shuf([...Array(22).keys()]).slice(0,5),as=shuf('wcsp'.split('')).slice(0,2);G={p:[pl(mkDeck(D.m,D.s)),pl(mkDeck(am,as))],turn:0,sel:null,mode:null,view:null,busy:false,over:null,log:['対戦開始！']};draw(0,4);draw(1,4);$('#ov').style.display='none';startTurn(0)}
+function startTurn(i){const p=G.p[i];p.max=Math.min(10,p.max+1);p.en=p.max+p.bonus;p.bonus=0;p.field.forEach(u=>{u.atkLeft=u.frozen?0:1;u.frozen=false});draw(i);G.turn=i;G.sel=G.mode=null;sfx('turn',i);log(`${nm(i)}のターン（気力${p.en}）`);R()}
+function endTurn(i){G.p[i].field.slice().forEach(u=>{u.tmp=0;if(END[u.c.id]){END[u.c.id](u);log(`${u.c.n}の効果が発動`)}});G.sel=G.mode=null;if(G.over)return R();startTurn(1-i);if(G.turn===1&&!G.over)runAI()}
+function faceDmg(s,n){const p=G.p[s];sfx('hit');p.life-=n;log(`${nm(s)}に${n}ダメージ`);if(p.life<=0&&!G.over)G.over=s?'win':'lose'}
+function dmgU(u,s,n,f){if(!G.p[s].field.includes(u))return;if(u.shield&&!f){u.shield=false;sfx('shield');log(`${u.c.n}の盾が攻撃を防いだ`);return}if(u.c.id==='strength'&&!f)n=Math.max(0,n-1);u.hp-=n;if(u.hp>0)sfx('hit');if(u.hp<=0){sfx('die');G.p[s].field=G.p[s].field.filter(x=>x!==u);G.p[s].grave.push(u.c);log(`${u.c.n}（${nm(s)}）が倒れた`);if(u.c.id==='tower'){G.p[1-s].field.slice().forEach(x=>dmgU(x,1-s,2));faceDmg(1-s,2)}}}
+function hit(t,n){t.u?dmgU(t.u,t.s,n):faceDmg(t.s,n)}
+function spawn(m,c,hp){const u={id:++uid,c,s:m,atk:c.atk,hp:hp||c.hp,tmp:0,atkLeft:c.id==='chariot'?1:0,shield:false,frozen:false};G.p[m].field.push(u);return u}
+function attack(s,u,t){u.atkLeft--;sfx('atk');const a=A(u);if(!t.u){log(`${u.c.n}が攻撃`);faceDmg(t.s,a)}else{const d=t.u,b=A(d);log(`${u.c.n}が${d.c.n}を攻撃`);dmgU(d,t.s,a);dmgU(u,s,b)}}
+function play(m,i,t){const p=G.p[m],c=p.hand[i];p.en-=c.cost;p.hand.splice(i,1);
+ if(c.k==='M'){sfx('summon');fxPlay(c,m);const u=spawn(m,c);log(`${nm(m)}が「${c.n}」を召喚`);if(ON[c.id])ON[c.id](m,u)}
+ else{log(`${nm(m)}が「${c.n}${c.rev?'（逆位置）':''}」を使用`);sfx('spell',c.s);fxPlay(c,m);c.fx(m,t);p.field.slice().forEach(u=>{if(u.c.su===c.s&&p.field.includes(u)){CB[u.c.cb][1](u);log(`✦相性：${u.c.n}×${SU[c.s].n} ${CB[u.c.cb][0]}`);sfx('combo')}})}
+ G.sel=G.mode=null;if(m===0&&!SEEN.has(c.id)){SEEN.add(c.id);G.view=c;log(`📖初めて使用：${c.n}（下の解説を確認）`)}else if(m===0)G.view=null}
+function canUse(c){const p=G.p[0],e=G.p[1];if(G.turn||G.busy||G.over||c.cost>p.en)return false;if(c.k==='M')return p.field.length<4;return c.t==='self'||c.t==='en'||(c.t==='ally'&&(c.rdy?p.field.some(u=>u.atkLeft>0):p.field.length>0))||(c.t==='eu'&&e.field.length>0)}
+function isT(s,u){if(G.mode==='atk')return s===1&&(u||!G.p[1].field.length);if(G.mode!=='card')return false;const c=G.p[0].hand[G.sel.i],t=c.t;return t==='ally'?(s===0&&!!u&&(!c.rdy||u.atkLeft>0)):t==='eu'?(s===1&&!!u):t==='en'?s===1:false}
+function info(c,u){if(!c)return'<i>カードをタップすると意味と能力が表示されます。</i>';
+ if(c.k==='M')return`<span style="float:right;margin:0 0 4px 8px">${art(c,64)}</span><b>${c.n}（${c.r}）</b> 気力${c.cost}／攻${u?A(u):c.atk} 体${u?u.hp:c.hp}<br>意味：${c.mean}<br>絵柄：${c.img}<br>能力：${c.ab}<br>相性：${SU[c.su].n}を使うと${CB[c.cb][0]}<br><i>※能力と相性は、意味や象徴から着想したゲーム独自の設計で、タロットの公式な戦闘能力ではありません。</i>`;
+ const s=SU[c.s];return`<span style="float:right;margin:0 0 4px 8px">${art(c,64)}</span><b>${c.n}${c.rev===undefined?'':c.rev?'（逆位置）':'（正位置）'}</b> 気力${c.cost}<br>${c.rev===undefined&&c.R?'正位置：':''}${c.d}<br>${c.rev===undefined&&c.R?`逆位置（気力${c.R.cost||c.cost}）：${c.R.d}<br>`:''}${s.n}は四元素の「${s.el}」に対応（伝統的な解釈の一つ）。役割：${s.role}。<br><i>※数札は2が最弱でエースが最強、コートカードは固有効果です。小アルカナは引いた時に約4割が逆位置になり、効果が変わります（コートカードの逆位置は気力-1・自分に2ダメージ）。効果は独自設計です。</i>`}
+function R(){const[me,ai]=G.p,my=!G.turn&&!G.busy&&!G.over;
+ const un=(u,s)=>`<div class="u ${u.atkLeft<=0?'tp':''} ${isT(s,u)?'tg':''} ${G.sel&&G.sel.k==='u'&&G.sel.id===u.id?'sel':''} ${s===0&&u.atkLeft>0&&my?'rdy':''}" data-a="unit" data-s="${s}" data-id="${u.id}">${art(u.c,34)}<b>${u.c.n}</b><span class="r">${u.c.r}</span><span class="st">攻${A(u)} 体${u.hp}</span><span class="fl">${u.shield?'盾 ':''}${u.frozen?'封印 ':''}${u.atkLeft>1?'連撃':''}</span></div>`;
+ const hc=me.hand.map((c,i)=>`<div class="c ${G.sel&&G.sel.k==='h'&&G.sel.i===i?'sel':''} ${canUse(c)?'':'no'}" style="--sc:${c.k==='M'?'#d4b062':SU[c.s].c}" data-a="hand" data-i="${i}"><span class="co">${c.cost}</span>${art(c,38)}<span class="nm" style="${c.rev?'color:#8a2d4a':''}">${c.n}${c.rev?'<br>逆位置':''}</span></div>`).join('');
+ let v=null,vu=null;if(G.sel&&G.sel.k==='h')v=me.hand[G.sel.i];else if(G.view){v=G.view.c||G.view;vu=G.view.c?G.view:null}
+ const h0=G.sel&&G.sel.k==='h'?me.hand[G.sel.i]:null;
+ let b=`<button data-a="dex">図鑑</button><button class="p" data-a="end" ${my?'':'disabled'}>ターン終了</button>`;
+ if(h0)b=`<button data-a="cancel">やめる</button><button class="p" data-a="use" ${canUse(h0)?'':'disabled'}>${h0.k==='M'?'召喚する':'使う'}</button>`;
+ if(G.mode)b=`<button data-a="cancel">やめる</button>`;
+ $('#app').innerHTML=`<div class="bar ${G.turn?'t':''} ${isT(1,null)?'tg':''}" data-a="face" data-s="1"><span>相手 ♥${ai.life}</span><small>手札${ai.hand.length}／山札${ai.deck.length}／気力${ai.en}/${ai.max}</small></div>
+ <div class="field">${ai.field.map(u=>un(u,1)).join('')}</div>
+ <div class="log"><span class="snd">${sb()}</span>${G.log.slice(-3).join('<br>')}</div>
+ <div class="field">${me.field.map(u=>un(u,0)).join('')}</div>
+ <div class="bar ${G.turn?'':'t'}"><span>あなた ♥${me.life}</span><small>山札${me.deck.length}／気力${me.en}/${me.max}${G.mode?'　対象を選択':''}</small></div>
+ <div class="info">${info(v,vu)}</div><div class="hand">${hc}</div><div class="btns">${b}</div>`;
+ if(G.over)end()}
+function ov(h,top){const o=$('#ov');o.style.display='flex';o.style.alignItems=top?'flex-start':'center';o.style.overflow=top?'auto':'';o.innerHTML=h}
+function end(){if(!G.sd){G.sd=1;sfx(G.over)}ov(`<div><h1>${G.over==='win'?'勝利':'敗北'}</h1>${G.over==='win'?'相手のライフを0にしました。':'ライフが0になりました。'}<button class="p" onclick="newGame()">同じデッキでもう一度</button><button onclick="build()">デッキを組み直す</button></div>`)}
+function intro(){ov(`<div><h1>タロット・デュエル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br>・デッキは大アルカナ5枚＋選んだ2スートの小アルカナ15枚<br>・手札をタップ→「使う／召喚する」<br>・攻撃：緑枠の自分のユニットをタップ→相手を選ぶ<br>・相手のユニットがいる間は、ライフへ直接攻撃できません<br>・ユニットは召喚直後や攻撃後は横向き（タップ）になり、次の自分のターンに起き上がります<br>・気力は毎ターン1ずつ増えます（最大10）<br>・小アルカナは、引いた時に約4割が逆位置になり、効果が変わります<br>・大アルカナと同じ相性スートの小アルカナを使うと✦相性が発動します<br><p>${sb()}</p><button class="p" onclick="build()">デッキを組む</button></div>`)}
+function build(){const ok=D.m.length===5&&D.s.length===2;ov(`<div><h1>デッキ構築</h1><p>大アルカナを5枚、小アルカナのスートを2つ選びます。</p><div class="chips">${MAJ.map((c,i)=>`<span class="ch ${D.m.includes(i)?'on':''}" onclick="tg('m',${i})">${c.r} ${c.n}</span>`).join('')}</div><div class="chips">${Object.keys(SU).map(s=>`<span class="ch ${D.s.includes(s)?'on':''}" onclick="tg('s','${s}')">${SU[s].n}</span>`).join('')}</div><p>選択：大アルカナ${D.m.length}/5・スート${D.s.length}/2</p><div class="dx">${D.v||'<i>カードをタップすると解説が出ます。</i>'}</div><button onclick="auto()">おまかせで選ぶ</button><button onclick="dex('build')">カード図鑑</button><button class="p" ${ok?'':'disabled'} onclick="newGame()">対戦開始</button></div>`,1)}
+function tg(k,x){const a=D[k],n=k==='m'?5:2,i=a.indexOf(x);if(i>=0)a.splice(i,1);else if(a.length<n)a.push(x);D.v=k==='m'?info(MAJ[x]):`<b>${SU[x].n}</b>：${SU[x].el}の象徴。${SU[x].role}。`;build()}
+function auto(){D.m=shuf([...Array(22).keys()]).slice(0,5);D.s=shuf('wcsp'.split('')).slice(0,2);D.v='';build()}
+function dex(b){DB=b;ov(`<div><h1>カード図鑑</h1><p><b>大アルカナ（22枚）</b></p>${MAJ.map(c=>`<div class="dx">${info(c)}</div>`).join('')}<p><b>小アルカナ（56枚）</b></p>${Object.keys(SU).map(s=>`<div class="dx"><b>${SU[s].n}</b>（${SU[s].el}）：${SU[s].role}<br>${MINS.filter(c=>c.s===s&&c.id.slice(1)>9).map(c=>`${c.n}：${c.d}`).join('<br>')}<br>数札：2が最弱、エースが最強です（2→3→…→10→エースの順に気力と効果が上がります）。<br>2（気力${MINS.find(c=>c.id===s+'1').cost}）：${MINS.find(c=>c.id===s+'1').d}<br>エース（気力${MINS.find(c=>c.id===s+'0').cost}）：${MINS.find(c=>c.id===s+'0').d}<br>エースの逆位置：${MINS.find(c=>c.id===s+'0').R.d}</div>`).join('')}<button class="p" onclick="closeDex()">閉じる</button></div>`,1)}
+function closeDex(){DB==='build'?build():$('#ov').style.display='none'}
+function fxPlay(c,m){const f=$('#fx');if(!f)return;const M=c.k==='M',col=M?'#d4b062':SU[c.s].c,d=document.createElement('div'),N=M?24:16,R=(a,b)=>a+Math.random()*(b-a);d.className='fx '+(M?'fxM':'fxm fx'+c.s);d.style.setProperty('--fc',col);d.style.setProperty('--dx',m?1:-1);
+ let pt='';for(let i=0;i<N;i++)pt+=`<i class="pt" style="--a:${i*360/N}deg;--r:${R(110,260)}px;--x:${R(-130,130)}px;--y:${R(-150,150)}px;--y2:${R(-10,90)}px;--dl:${R(0,.25)}s"></i>`;
+ d.innerHTML=`<i class="fl"></i><i class="ring"></i><i class="ring r2"></i>${M?'<i class="ray"></i>':''}${pt}<div class="fcard">${art(c,M?112:84)}<b>${c.n}</b>${M?`<small>${c.r}</small>`:c.rev?'<small>逆位置</small>':''}</div><div class="fban">${M?'召喚':SU[c.s].n+(c.rev?'・逆位置':'')}</div>`;
+ f.appendChild(d);if(M){const a=$('#app');a.classList.add('shake');setTimeout(()=>a.classList.remove('shake'),900)}setTimeout(()=>d.remove(),1500)}
+function resolve(t){if(G.mode==='card')play(0,G.sel.i,t);else{const u=G.p[0].field.find(x=>x.id===G.sel.id);G.sel=G.mode=null;attack(0,u,t)}R()}
+$('#app').onclick=e=>{if(G.busy||G.over||G.turn)return;const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,s=+el.dataset.s,me=G.p[0];if(a==='hand'||a==='unit')sfx('sel');else if(a!=='use')sfx('tap');
+ if(a==='hand'){G.sel={k:'h',i:+el.dataset.i};G.mode=null;G.view=null}
+ else if(a==='use'){const c=me.hand[G.sel.i];if(!canUse(c)){sfx('no');return}if(c.k==='M'||c.t==='self')play(0,G.sel.i,{});else G.mode='card'}
+ else if(a==='cancel'){G.sel=G.mode=null}
+ else if(a==='dex'){dex('game');return}
+ else if(a==='end')endTurn(0);
+ else if(a==='face'){if(G.mode&&isT(1,null))return resolve({s:1,u:null})}
+ else if(a==='unit'){const u=G.p[s].field.find(x=>x.id==+el.dataset.id);if(G.mode&&isT(s,u))return resolve({s,u});
+  if(s===0&&u.atkLeft>0){G.sel={k:'u',id:u.id};G.mode='atk'}else{G.sel=null;G.mode=null}G.view=u}
+ R()};
+async function runAI(){G.busy=true;R();await sl(800);const p=G.p[1];
+ for(let g=0;g<20&&!G.over;g++){let f=null;
+  const cs=p.hand.map((c,i)=>({c,i})).filter(x=>x.c.cost<=p.en).sort((a,b)=>(b.c.k==='M')-(a.c.k==='M')||b.c.cost-a.c.cost);
+  for(const x of cs){const t=aiT(x.c);if(t){f={i:x.i,t};break}}
+  if(!f)break;play(1,f.i,f.t);R();await sl(1300)}
+ for(const u of [...p.field]){while(!G.over&&u.atkLeft>0&&p.field.includes(u)){const t=aiAtk(u);if(!t)break;attack(1,u,t);R();await sl(800)}}
+ G.busy=false;if(!G.over)endTurn(1);else R()}
+function aiT(c){const p=G.p[1],o=G.p[0],best=f=>f.slice().sort((a,b)=>A(b)-A(a))[0];
+ if(c.k==='M')return p.field.length<4?{}:null;
+ if(c.t==='self')return{};
+ if(c.t==='ally'){const f=c.rdy?p.field.filter(u=>u.atkLeft>0):p.field;return f.length?{s:1,u:best(f)}:null}
+ if(c.t==='eu')return o.field.length?{s:0,u:best(o.field)}:null;
+ const k=o.field.find(u=>u.hp<=c.dmg&&!u.shield);return k?{s:0,u:k}:{s:0,u:null}}
+function aiAtk(u){const o=G.p[0],a=A(u);if(!o.field.length)return{s:0,u:null};
+ const ks=o.field.filter(d=>a>=d.hp&&!d.shield&&(u.hp>A(d)||u.shield)).sort((x,y)=>A(y)-A(x));if(ks.length)return{s:0,u:ks[0]};
+ const sf=o.field.filter(d=>u.hp>A(d)||u.shield);return sf.length&&Math.random()<.6?{s:0,u:sf[0]}:null}
+intro();
+</script></body></html>
