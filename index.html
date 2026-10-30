@@ -146,7 +146,7 @@ function bgStart(){if(bgT||!AC)return;const T=TK[cur];let bar=0,nx=AC.currentTim
 function bgStop(){clearInterval(bgT);bgT=null}
 document.addEventListener('click',e=>{aud();const b=e.target.closest('[data-snd]');if(b){if(b.dataset.snd==='bgm'){BGon=!BGon;BGon?bgStart():bgStop()}else if(b.dataset.snd==='trk'){cur=(cur+1)%TK.length;BGon=true;bgStop();bgStart()}else SEon=!SEon;document.querySelectorAll('[data-snd]').forEach(x=>{x.textContent=lbl(x.dataset.snd)})}else if(e.target.closest('#ov button,.ch'))sfx('tap')});
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume()});
-let G,D={m:[],s:[]},DB,uid=0;const SEEN=new Set();
+let G,D={m:[],s:[],dif:1},DB,uid=0;const SEEN=new Set();
 const foes=m=>G.p[1-m].field,mine=m=>G.p[m].field,nm=i=>i?'相手':'あなた';
 const CB={ex:['追加攻撃1回',u=>{u.atkLeft++}],gr:['攻撃+1・体力+1',u=>{u.atk++;u.hp++}],dr:['カードを1枚引く',u=>draw(u.s)],sh:['盾を得る',u=>{u.shield=true}],he:['ライフ+2',u=>{G.p[u.s].life+=2}],en:['次ターン気力+1',u=>{G.p[u.s].bonus++}],at:['攻撃+1',u=>{u.atk++}]};
 const rnd=a=>a[Math.random()*a.length|0];
@@ -168,9 +168,9 @@ const mkDeck=(m,s)=>shuf([...m.map(i=>({...MAJ[i]})),...shuf(MINS.filter(c=>s.in
 const pl=d=>({life:20,hand:[],deck:d,field:[],grave:[],max:0,en:0,bonus:0});
 const A=u=>u.atk+u.tmp+(u.c.id!=='emperor'&&G.p[u.s].field.some(x=>x.c.id==='emperor')?1:0);
 function log(m){G.log.push(m)}
-function draw(i,n=1){const p=G.p[i];for(let k=0;k<n;k++){if(p.deck.length){const c=p.deck.pop();if(c.k==='m'){c.rev=Math.random()<.4;if(c.rev)Object.assign(c,c.R)}p.hand.push(c);if(!i)sfx('draw')}else log(`${nm(i)}の山札が尽きた`)}}
-function newGame(){const am=shuf([...Array(22).keys()]).slice(0,5),as=shuf('wcsp'.split('')).slice(0,2);G={p:[pl(mkDeck(D.m,D.s)),pl(mkDeck(am,as))],turn:0,sel:null,mode:null,view:null,busy:false,over:null,log:['対戦開始！']};draw(0,4);draw(1,4);$('#ov').style.display='none';startTurn(0)}
-function startTurn(i){const p=G.p[i];p.max=Math.min(10,p.max+1);p.en=p.max+p.bonus;p.bonus=0;p.field.forEach(u=>{u.atkLeft=u.frozen?0:1;u.frozen=false});draw(i);G.turn=i;G.sel=G.mode=null;sfx('turn',i);log(`${nm(i)}のターン（気力${p.en}）`);R()}
+function draw(i,n=1){const p=G.p[i];for(let k=0;k<n;k++){if(p.deck.length){const c=p.deck.pop();if(c.k==='m'){c.rev=Math.random()<.4;if(c.rev)Object.assign(c,c.R)}p.hand.push(c);if(!i)sfx('draw')}else{p.fat=(p.fat||0)+1;log(`${nm(i)}の山札が尽きた：ファティーグ`);faceDmg(i,p.fat)}}}
+function newGame(){const H=['emperor','sun','world','death','strength','chariot','justice','tower','moon','hierophant'].map(id=>MAJ.findIndex(c=>c.id===id)),am=D.dif===2?shuf(H).slice(0,5):shuf([...Array(22).keys()]).slice(0,5),as=D.dif===2?['w',rnd(['c','s','p'])]:shuf('wcsp'.split('')).slice(0,2);G={p:[pl(mkDeck(D.m,D.s)),pl(mkDeck(am,as))],turn:0,sel:null,mode:null,view:null,busy:false,over:null,log:['対戦開始！']};G.p[1].life=[16,20,25][D.dif];draw(0,4);draw(1,D.dif===2?5:4);$('#ov').style.display='none';startTurn(0)}
+function startTurn(i){const p=G.p[i];p.max=Math.min(10,p.max+1);p.en=p.max+p.bonus+(i===1&&D.dif===2?1:0);p.bonus=0;p.field.forEach(u=>{u.atkLeft=u.frozen?0:1;u.frozen=false});p.field.slice().forEach(u=>{if(A(u)===0){u.fat=(u.fat||0)+1;log(`${u.c.n}は攻撃力0で消耗（${u.fat}ダメージ）`);dmgU(u,i,u.fat,1)}});draw(i);G.turn=i;G.sel=G.mode=null;sfx('turn',i);log(`${nm(i)}のターン（気力${p.en}）`);R()}
 function endTurn(i){G.p[i].field.slice().forEach(u=>{u.tmp=0;if(END[u.c.id]){END[u.c.id](u);log(`${u.c.n}の効果が発動`)}});G.sel=G.mode=null;if(G.over)return R();startTurn(1-i);if(G.turn===1&&!G.over)runAI()}
 function faceDmg(s,n){const p=G.p[s];sfx('hit');p.life-=n;log(`${nm(s)}に${n}ダメージ`);if(p.life<=0&&!G.over)G.over=s?'win':'lose'}
 function dmgU(u,s,n,f){if(!G.p[s].field.includes(u))return;if(u.shield&&!f){u.shield=false;sfx('shield');log(`${u.c.n}の盾が攻撃を防いだ`);return}if(u.c.id==='strength'&&!f)n=Math.max(0,n-1);u.hp-=n;if(u.hp>0)sfx('hit');if(u.hp<=0){sfx('die');G.p[s].field=G.p[s].field.filter(x=>x!==u);G.p[s].grave.push(u.c);log(`${u.c.n}（${nm(s)}）が倒れた`);if(u.c.id==='tower'){G.p[1-s].field.slice().forEach(x=>dmgU(x,1-s,2));faceDmg(1-s,2)}}}
@@ -187,14 +187,14 @@ function info(c,u){if(!c)return'<i>カードをタップすると意味と能力
  if(c.k==='M')return`<span style="float:right;margin:0 0 4px 8px">${art(c,64)}</span><b>${c.n}（${c.r}）</b> 気力${c.cost}／攻${u?A(u):c.atk} 体${u?u.hp:c.hp}<br>意味：${c.mean}<br>絵柄：${c.img}<br>能力：${c.ab}<br>相性：${SU[c.su].n}を使うと${CB[c.cb][0]}<br><i>※能力と相性は、意味や象徴から着想したゲーム独自の設計で、タロットの公式な戦闘能力ではありません。</i>`;
  const s=SU[c.s];return`<span style="float:right;margin:0 0 4px 8px">${art(c,64)}</span><b>${c.n}${c.rev===undefined?'':c.rev?'（逆位置）':'（正位置）'}</b> 気力${c.cost}<br>${c.rev===undefined&&c.R?'正位置：':''}${c.d}<br>${c.rev===undefined&&c.R?`逆位置（気力${c.R.cost||c.cost}）：${c.R.d}<br>`:''}${s.n}は四元素の「${s.el}」に対応（伝統的な解釈の一つ）。役割：${s.role}。<br><i>※数札は2が最弱でエースが最強、コートカードは固有効果です。小アルカナは引いた時に約4割が逆位置になり、効果が変わります（コートカードの逆位置は気力-1・自分に2ダメージ）。効果は独自設計です。</i>`}
 function R(){const[me,ai]=G.p,my=!G.turn&&!G.busy&&!G.over;
- const un=(u,s)=>`<div class="u ${u.atkLeft<=0?'tp':''} ${isT(s,u)?'tg':''} ${G.sel&&G.sel.k==='u'&&G.sel.id===u.id?'sel':''} ${s===0&&u.atkLeft>0&&my?'rdy':''}" data-a="unit" data-s="${s}" data-id="${u.id}">${art(u.c,34)}<b>${u.c.n}</b><span class="r">${u.c.r}</span><span class="st">攻${A(u)} 体${u.hp}</span><span class="fl">${u.shield?'盾 ':''}${u.frozen?'封印 ':''}${u.atkLeft>1?'連撃':''}</span></div>`;
+ const un=(u,s)=>`<div class="u ${u.atkLeft<=0?'tp':''} ${isT(s,u)?'tg':''} ${G.sel&&G.sel.k==='u'&&G.sel.id===u.id?'sel':''} ${s===0&&u.atkLeft>0&&my?'rdy':''}" data-a="unit" data-s="${s}" data-id="${u.id}">${art(u.c,34)}<b>${u.c.n}</b><span class="r">${u.c.r}</span><span class="st">攻${A(u)} 体${u.hp}</span><span class="fl">${u.shield?'盾 ':''}${u.frozen?'封印 ':''}${A(u)===0?'消耗 ':''}${u.atkLeft>1?'連撃':''}</span></div>`;
  const hc=me.hand.map((c,i)=>`<div class="c ${G.sel&&G.sel.k==='h'&&G.sel.i===i?'sel':''} ${canUse(c)?'':'no'}" style="--sc:${c.k==='M'?'#d4b062':SU[c.s].c}" data-a="hand" data-i="${i}"><span class="co">${c.cost}</span>${art(c,38)}<span class="nm" style="${c.rev?'color:#8a2d4a':''}">${c.n}${c.rev?'<br>逆位置':''}</span></div>`).join('');
  let v=null,vu=null;if(G.sel&&G.sel.k==='h')v=me.hand[G.sel.i];else if(G.view){v=G.view.c||G.view;vu=G.view.c?G.view:null}
  const h0=G.sel&&G.sel.k==='h'?me.hand[G.sel.i]:null;
- let b=`<button data-a="dex">図鑑</button><button class="p" data-a="end" ${my?'':'disabled'}>ターン終了</button>`;
+ let b=`<button data-a="dex">図鑑</button><button data-a="resign" ${my?'':'disabled'}>投了</button><button class="p" data-a="end" ${my?'':'disabled'}>ターン終了</button>`;
  if(h0)b=`<button data-a="cancel">やめる</button><button class="p" data-a="use" ${canUse(h0)?'':'disabled'}>${h0.k==='M'?'召喚する':'使う'}</button>`;
  if(G.mode)b=`<button data-a="cancel">やめる</button>`;
- $('#app').innerHTML=`<div class="bar ${G.turn?'t':''} ${isT(1,null)?'tg':''}" data-a="face" data-s="1"><span>相手 ♥${ai.life}</span><small>手札${ai.hand.length}／山札${ai.deck.length}／気力${ai.en}/${ai.max}</small></div>
+ $('#app').innerHTML=`<div class="bar ${G.turn?'t':''} ${isT(1,null)?'tg':''}" data-a="face" data-s="1"><span>相手（${['弱い','普通','強い'][D.dif]}） ♥${ai.life}</span><small>手札${ai.hand.length}／山札${ai.deck.length}／気力${ai.en}/${ai.max}</small></div>
  <div class="field">${ai.field.map(u=>un(u,1)).join('')}</div>
  <div class="log"><span class="snd">${sb()}</span>${G.log.slice(-3).join('<br>')}</div>
  <div class="field">${me.field.map(u=>un(u,0)).join('')}</div>
@@ -202,9 +202,9 @@ function R(){const[me,ai]=G.p,my=!G.turn&&!G.busy&&!G.over;
  <div class="info">${info(v,vu)}</div><div class="hand">${hc}</div><div class="btns">${b}</div>`;
  if(G.over)end()}
 function ov(h,top){const o=$('#ov');o.style.display='flex';o.style.alignItems=top?'flex-start':'center';o.style.overflow=top?'auto':'';o.innerHTML=h}
-function end(){if(!G.sd){G.sd=1;sfx(G.over)}ov(`<div><h1>${G.over==='win'?'勝利':'敗北'}</h1>${G.over==='win'?'相手のライフを0にしました。':'ライフが0になりました。'}<button class="p" onclick="newGame()">同じデッキでもう一度</button><button onclick="build()">デッキを組み直す</button></div>`)}
-function intro(){ov(`<div><h1>タロット・デュエル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br>・デッキは大アルカナ5枚＋選んだ2スートの小アルカナ15枚<br>・手札をタップ→「使う／召喚する」<br>・攻撃：緑枠の自分のユニットをタップ→相手を選ぶ<br>・相手のユニットがいる間は、ライフへ直接攻撃できません<br>・ユニットは召喚直後や攻撃後は横向き（タップ）になり、次の自分のターンに起き上がります<br>・気力は毎ターン1ずつ増えます（最大10）<br>・小アルカナは、引いた時に約4割が逆位置になり、効果が変わります<br>・大アルカナと同じ相性スートの小アルカナを使うと✦相性が発動します<br><p>${sb()}</p><button class="p" onclick="build()">デッキを組む</button></div>`)}
-function build(){const ok=D.m.length===5&&D.s.length===2;ov(`<div><h1>デッキ構築</h1><p>大アルカナを5枚、小アルカナのスートを2つ選びます。</p><div class="chips">${MAJ.map((c,i)=>`<span class="ch ${D.m.includes(i)?'on':''}" onclick="tg('m',${i})">${c.r} ${c.n}</span>`).join('')}</div><div class="chips">${Object.keys(SU).map(s=>`<span class="ch ${D.s.includes(s)?'on':''}" onclick="tg('s','${s}')">${SU[s].n}</span>`).join('')}</div><p>選択：大アルカナ${D.m.length}/5・スート${D.s.length}/2</p><div class="dx">${D.v||'<i>カードをタップすると解説が出ます。</i>'}</div><button onclick="auto()">おまかせで選ぶ</button><button onclick="dex('build')">カード図鑑</button><button class="p" ${ok?'':'disabled'} onclick="newGame()">対戦開始</button></div>`,1)}
+function end(){if(!G.sd){G.sd=1;sfx(G.over)}ov(`<div><h1>${G.over==='win'?'勝利':'敗北'}</h1>${G.over==='win'?'相手のライフを0にしました。':G.resigned?'投了しました。':'ライフが0になりました。'}<button class="p" onclick="newGame()">同じデッキでもう一度</button><button onclick="build()">デッキを組み直す</button></div>`)}
+function intro(){ov(`<div><h1>タロット・デュエル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br>・デッキは大アルカナ5枚＋選んだ2スートの小アルカナ15枚<br>・手札をタップ→「使う／召喚する」<br>・攻撃：緑枠の自分のユニットをタップ→相手を選ぶ<br>・相手のユニットがいる間は、ライフへ直接攻撃できません<br>・ユニットは召喚直後や攻撃後は横向き（タップ）になり、次の自分のターンに起き上がります<br>・攻撃力が0のユニットは、自分のターン開始時に1、2、3…と増えるダメージを受けます（ファティーグ）<br>・山札が尽きた状態でカードを引くと、ライフに1、2、3…と増えるダメージを受けます<br>・気力は毎ターン1ずつ増えます（最大10）<br>・小アルカナは、引いた時に約4割が逆位置になり、効果が変わります<br>・大アルカナと同じ相性スートの小アルカナを使うと✦相性が発動します<br><p>${sb()}</p><button class="p" onclick="build()">デッキを組む</button></div>`)}
+function build(){const ok=D.m.length===5&&D.s.length===2;ov(`<div><h1>デッキ構築</h1><p>難易度</p><div class="chips">${['弱い','普通','強い'].map((n,i)=>`<span class="ch ${D.dif===i?'on':''}" onclick="D.dif=${i};build()">${n}</span>`).join('')}</div><p>大アルカナを5枚、小アルカナのスートを2つ選びます。</p><div class="chips">${MAJ.map((c,i)=>`<span class="ch ${D.m.includes(i)?'on':''}" onclick="tg('m',${i})">${c.r} ${c.n}</span>`).join('')}</div><div class="chips">${Object.keys(SU).map(s=>`<span class="ch ${D.s.includes(s)?'on':''}" onclick="tg('s','${s}')">${SU[s].n}</span>`).join('')}</div><p>選択：大アルカナ${D.m.length}/5・スート${D.s.length}/2</p><div class="dx">${D.v||'<i>カードをタップすると解説が出ます。</i>'}</div><button onclick="auto()">おまかせで選ぶ</button><button onclick="dex('build')">カード図鑑</button><button class="p" ${ok?'':'disabled'} onclick="newGame()">対戦開始</button></div>`,1)}
 function tg(k,x){const a=D[k],n=k==='m'?5:2,i=a.indexOf(x);if(i>=0)a.splice(i,1);else if(a.length<n)a.push(x);D.v=k==='m'?info(MAJ[x]):`<b>${SU[x].n}</b>：${SU[x].el}の象徴。${SU[x].role}。`;build()}
 function auto(){D.m=shuf([...Array(22).keys()]).slice(0,5);D.s=shuf('wcsp'.split('')).slice(0,2);D.v='';build()}
 function dex(b){DB=b;ov(`<div><h1>カード図鑑</h1><p><b>大アルカナ（22枚）</b></p>${MAJ.map(c=>`<div class="dx">${info(c)}</div>`).join('')}<p><b>小アルカナ（56枚）</b></p>${Object.keys(SU).map(s=>`<div class="dx"><b>${SU[s].n}</b>（${SU[s].el}）：${SU[s].role}<br>${MINS.filter(c=>c.s===s&&c.id.slice(1)>9).map(c=>`${c.n}：${c.d}`).join('<br>')}<br>数札：2が最弱、エースが最強です（2→3→…→10→エースの順に気力と効果が上がります）。<br>2（気力${MINS.find(c=>c.id===s+'1').cost}）：${MINS.find(c=>c.id===s+'1').d}<br>エース（気力${MINS.find(c=>c.id===s+'0').cost}）：${MINS.find(c=>c.id===s+'0').d}<br>エースの逆位置：${MINS.find(c=>c.id===s+'0').R.d}</div>`).join('')}<button class="p" onclick="closeDex()">閉じる</button></div>`,1)}
@@ -213,12 +213,15 @@ function fxPlay(c,m){const f=$('#fx');if(!f)return;const M=c.k==='M',col=M?'#d4b
  let pt='';for(let i=0;i<N;i++)pt+=`<i class="pt" style="--a:${i*360/N}deg;--r:${R(110,260)}px;--x:${R(-130,130)}px;--y:${R(-150,150)}px;--y2:${R(-10,90)}px;--dl:${R(0,.25)}s"></i>`;
  d.innerHTML=`<i class="fl"></i><i class="ring"></i><i class="ring r2"></i>${M?'<i class="ray"></i>':''}${pt}<div class="fcard">${art(c,M?112:84)}<b>${c.n}</b>${M?`<small>${c.r}</small>`:c.rev?'<small>逆位置</small>':''}</div><div class="fban">${M?'召喚':SU[c.s].n+(c.rev?'・逆位置':'')}</div>`;
  f.appendChild(d);if(M){const a=$('#app');a.classList.add('shake');setTimeout(()=>a.classList.remove('shake'),900)}setTimeout(()=>d.remove(),1500)}
+function askResign(){ov(`<div><h1>投了しますか？</h1>投了すると、この対戦は負けになります。<button class="p" onclick="doResign()">投了する</button><button onclick="$('#ov').style.display='none'">続ける</button></div>`)}
+function doResign(){G.over='lose';G.resigned=true;log('あなたは投了した');$('#ov').style.display='none';R()}
 function resolve(t){if(G.mode==='card')play(0,G.sel.i,t);else{const u=G.p[0].field.find(x=>x.id===G.sel.id);G.sel=G.mode=null;attack(0,u,t)}R()}
 $('#app').onclick=e=>{if(G.busy||G.over||G.turn)return;const el=e.target.closest('[data-a]');if(!el)return;const a=el.dataset.a,s=+el.dataset.s,me=G.p[0];if(a==='hand'||a==='unit')sfx('sel');else if(a!=='use')sfx('tap');
  if(a==='hand'){G.sel={k:'h',i:+el.dataset.i};G.mode=null;G.view=null}
  else if(a==='use'){const c=me.hand[G.sel.i];if(!canUse(c)){sfx('no');return}if(c.k==='M'||c.t==='self')play(0,G.sel.i,{});else G.mode='card'}
  else if(a==='cancel'){G.sel=G.mode=null}
  else if(a==='dex'){dex('game');return}
+ else if(a==='resign'){askResign();return}
  else if(a==='end')endTurn(0);
  else if(a==='face'){if(G.mode&&isT(1,null))return resolve({s:1,u:null})}
  else if(a==='unit'){const u=G.p[s].field.find(x=>x.id==+el.dataset.id);if(G.mode&&isT(s,u))return resolve({s,u});
@@ -227,7 +230,7 @@ $('#app').onclick=e=>{if(G.busy||G.over||G.turn)return;const el=e.target.closest
 async function runAI(){G.busy=true;R();await sl(800);const p=G.p[1];
  for(let g=0;g<20&&!G.over;g++){let f=null;
   const cs=p.hand.map((c,i)=>({c,i})).filter(x=>x.c.cost<=p.en).sort((a,b)=>(b.c.k==='M')-(a.c.k==='M')||b.c.cost-a.c.cost);
-  for(const x of cs){const t=aiT(x.c);if(t){f={i:x.i,t};break}}
+  if(D.dif===0)shuf(cs);for(const x of cs){if(D.dif===0&&Math.random()<.35)continue;const t=aiT(x.c);if(t){f={i:x.i,t};break}}
   if(!f)break;play(1,f.i,f.t);R();await sl(1300)}
  for(const u of [...p.field]){while(!G.over&&u.atkLeft>0&&p.field.includes(u)){const t=aiAtk(u);if(!t)break;attack(1,u,t);R();await sl(800)}}
  G.busy=false;if(!G.over)endTurn(1);else R()}
@@ -237,8 +240,8 @@ function aiT(c){const p=G.p[1],o=G.p[0],best=f=>f.slice().sort((a,b)=>A(b)-A(a))
  if(c.t==='ally'){const f=c.rdy?p.field.filter(u=>u.atkLeft>0):p.field;return f.length?{s:1,u:best(f)}:null}
  if(c.t==='eu')return o.field.length?{s:0,u:best(o.field)}:null;
  const k=o.field.find(u=>u.hp<=c.dmg&&!u.shield);return k?{s:0,u:k}:{s:0,u:null}}
-function aiAtk(u){const o=G.p[0],a=A(u);if(!o.field.length)return{s:0,u:null};
- const ks=o.field.filter(d=>a>=d.hp&&!d.shield&&(u.hp>A(d)||u.shield)).sort((x,y)=>A(y)-A(x));if(ks.length)return{s:0,u:ks[0]};
- const sf=o.field.filter(d=>u.hp>A(d)||u.shield);return sf.length&&Math.random()<.6?{s:0,u:sf[0]}:null}
+function aiAtk(u){const o=G.p[0],a=A(u);if(!o.field.length)return D.dif===0&&Math.random()<.4?null:{s:0,u:null};if(D.dif===0&&Math.random()<.5)return null;
+ const ks=o.field.filter(d=>a>=d.hp&&!d.shield&&(u.hp>A(d)||u.shield||(D.dif===2&&d.c.cost>=u.c.cost))).sort((x,y)=>A(y)-A(x));if(ks.length)return{s:0,u:ks[0]};
+ const sf=o.field.filter(d=>u.hp>A(d)||u.shield);return sf.length&&Math.random()<[.3,.6,.9][D.dif]?{s:0,u:sf[0]}:null}
 intro();
 </script></body></html>
