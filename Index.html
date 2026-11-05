@@ -45,8 +45,8 @@ button:disabled{opacity:.4}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:8;overflow:hidden}
 .fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
 .fx i{position:absolute}
-.fl{inset:0;background:var(--fc);opacity:0;animation:flash .6s ease-out}
-.fxm .fl{animation-duration:.4s}
+.ffl{inset:0;background:var(--fc);opacity:0;animation:flash .6s ease-out}
+.fxm .ffl{animation-duration:.4s}
 @keyframes flash{0%{opacity:.5}100%{opacity:0}}
 .ring{width:40px;height:40px;border:4px solid var(--fc);border-radius:50%;opacity:0;animation:ring .9s ease-out .3s}
 .r2{animation-delay:.45s;border-width:2px}
@@ -96,6 +96,7 @@ button:disabled{opacity:.4}
 .scn{width:100%;height:auto;border-radius:8px;border:1px solid #4a4272;margin:4px 0 8px;display:block}
 .tut{border:1px solid var(--gold);background:rgba(212,176,98,.12);border-radius:8px;padding:6px 8px;margin-bottom:8px;font-size:12.5px;line-height:1.55}.tut b{color:var(--gold)}
 .en{display:flex;justify-content:flex-end;padding-right:6px;gap:5px;min-height:14px;margin-bottom:-2px}.en i{width:11px;height:11px;border-radius:50%;border:2px solid var(--gold);box-sizing:border-box}.en i.on{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.c,.u{position:relative}.arc{position:absolute;top:3px;left:3px;z-index:1;background:linear-gradient(#f6dd92,#c99a3a);color:#2a1d05;font-weight:800;font-size:12px;line-height:1;padding:3px 6px;border-radius:5px;border:1px solid #6b4a10;box-shadow:0 1px 3px rgba(0,0,0,.55),0 0 6px rgba(212,176,98,.7);letter-spacing:.02em;pointer-events:none}.u .arc{font-size:10px;padding:2px 4px;top:2px;left:2px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
 <symbol id="sw" viewBox="0 0 14 16"><path d="M3 14L11 3M11 3H6M11 3v5"/></symbol>
@@ -208,7 +209,77 @@ const KR=[['空回り','遅れ'],['迷い','不均衡'],['停滞','孤立'],['�
 const SK={w:'情熱・行動',c:'感情・関係',s:'思考・対立',p:'物質・現実'};
 const FRD={w:'s',s:'w',c:'p',p:'c'},OPD={w:'c',c:'w',s:'p',p:'s'};
 function elmod(m,c){let f=0,o=0;mine(m).forEach(u=>{const x=u.c.su;if(FRD[x]===c.s)f++;else if(OPD[x]===c.s)o++});return[Math.max(-2,Math.min(2,f-o)),f,o]}
-const MINS=[];for(const s of 'wcsp')RK.forEach((r,i)=>{const L=i?i-1:13,Lr=13-L,cf=x=>Math.ceil((x+1)/3),pf=x=>2+Math.floor(x*.4),p=pf(L),pr=pf(Lr);let[d,fx]=NUM[s](p);if(i>9){const[rt,rf]=RD[i-10],f0=fx;d+='＋'+rt;fx=(m,t)=>{f0(m,t);rf(m)}}const[rd,rg,rt2,rm]=NUMR[s](pr);MINS.push({id:s+i,s,k:'m',n:`${SU[s].n}の${r}`,i,L,cost:cf(L),t:NT[s],d,fx,dmg:s==='w'?p:0,kw:KW[i],kr:KR[i],R:{L:Lr,cost:cf(Lr),t:rt2,d:rd,fx:rg,dmg:rm}})});
+const EXT={
+w:[
+ p=>['使用後、次に使うカードのコスト-1',m=>{G.p[m].cr=1}],
+ p=>['次の自分のターン開始時にカードを1枚引く',m=>{G.p[m].nd=(G.p[m].nd||0)+1}],
+ p=>['自分の場のユニット1体につきダメージ+1（最大+2）',(m,t)=>{const n=Math.min(2,mine(m).length);if(n)hit(t,n)}],
+ p=>['味方全体の体力+1',m=>mine(m).forEach(u=>{u.hp++})],
+ p=>['敵ユニット全体に1ダメージ',m=>foes(m).slice().forEach(u=>dmgU(u,1-m,1))],
+ p=>['このカードで敵ユニットを倒したら、カードを1枚引く',(m,t)=>{if(t.u&&!G.p[t.s].field.includes(t.u))draw(m)}],
+ p=>['自分の場のユニット1体に盾',m=>{const f=mine(m).filter(u=>!u.shield);if(f.length)rnd(f).shield=true}],
+ p=>['味方1体が、今ターンもう1回攻撃できる',m=>{const f=mine(m);if(f.length)f.slice().sort((a,b)=>A(b)-A(a))[0].atkLeft++}],
+ p=>['自分のライフが10以下ならダメージ+2',(m,t)=>{if(G.p[m].life<=10)hit(t,2)}],
+ p=>['ダメージ+3、ただし次のターンの気力-1',(m,t)=>{hit(t,3);G.p[m].bonus--}],
+ p=>['カードを1枚引く',m=>draw(m)],
+ p=>['味方1体が、召喚直後でも今すぐ攻撃できる',m=>{const u=mine(m).find(x=>x.atkLeft<=0&&!x.frozen);if(u)u.atkLeft=1}],
+ p=>['敵ユニット1体を封印',m=>{const f=foes(m);if(f.length)rnd(f).frozen=true}],
+ p=>['味方全体の攻撃+1（このターン）',m=>mine(m).forEach(u=>{u.tmp++})]
+],
+c:[
+ p=>['味方全体の体力+1',m=>mine(m).forEach(u=>{u.hp++})],
+ p=>['回復を、もう1体の味方にも同じ量与える',(m,t)=>{const o=mine(m).filter(u=>u!==t.u);if(o.length)rnd(o).hp+=q(p)}],
+ p=>['味方全体の体力+1、ライフ+1',m=>{mine(m).forEach(u=>{u.hp++});G.p[m].life++}],
+ p=>['次のターンの気力+1',m=>{G.p[m].bonus++}],
+ p=>['前の自分のターン終了以降に味方が倒れていたら、回復量+3',(m,t)=>{if(G.p[m].fell>0&&t.u&&G.p[m].field.includes(t.u))t.u.hp+=3}],
+ p=>['手札の逆位置のカード1枚を、正位置に戻す',m=>{const r=G.p[m].hand.filter(c=>c.k==='m'&&c.rev&&c.N);if(r.length){const c=rnd(r);flipCard(c);log(`${nm(m)}の「${c.n}」が正位置に戻った`)}}],
+ p=>['カードを2枚引いて、気力の低い手札1枚を捨てる',m=>{draw(m,2);selfDisc(m)}],
+ p=>['手札を1枚捨てて、気力+2',m=>{if(selfDisc(m))G.p[m].en+=2}],
+ p=>['ライフ+3',m=>{G.p[m].life+=3}],
+ p=>['味方全体の体力+2、ライフ+2',m=>{mine(m).forEach(u=>{u.hp+=2});G.p[m].life+=2}],
+ p=>['カードを1枚引き、相手の手札を1枚見る',m=>{draw(m);peek(m)}],
+ p=>['次のターンの気力+1、カードを1枚引く',m=>{G.p[m].bonus++;draw(m)}],
+ p=>['味方全体の体力+1、ライフ+3',m=>{mine(m).forEach(u=>{u.hp++});G.p[m].life+=3}],
+ p=>['味方全体に盾',m=>mine(m).forEach(u=>{u.shield=true})]
+],
+s:[
+ p=>['敵ユニット全体の攻撃-1（永続）',m=>foes(m).forEach(u=>{u.atk=Math.max(0,u.atk-1)})],
+ p=>['相手の次のターンの気力-1',m=>{G.p[1-m].bonus--}],
+ p=>['敵ユニットに2ダメージ、自分のライフも1減る',(m,t)=>{if(t.u)dmgU(t.u,t.s,2);faceDmg(m,1)}],
+ p=>['攻撃していない味方全体の体力+1',m=>mine(m).forEach(u=>{if(u.atkLeft>0)u.hp++})],
+ p=>['相手の手札を1枚捨てさせる、自分は1ダメージ',m=>{disc(m);faceDmg(m,1)}],
+ p=>['味方1体を手札に戻し、カードを1枚引く',m=>{const f=mine(m);if(f.length){const u=f.slice().sort((a,b)=>a.hp-b.hp)[0];G.p[m].field=f.filter(x=>x!==u);G.p[m].hand.push(u.c);log(`${nm(m)}の「${u.c.n}」が手札に戻った`)}draw(m)}],
+ p=>['相手の手札を1枚ランダムに奪う',m=>stealCard(m)],
+ p=>['敵ユニット1体を封印',(m,t)=>{if(t.u&&G.p[t.s].field.includes(t.u))t.u.frozen=true}],
+ p=>['相手の山札の上から2枚を捨てさせる',m=>{const d=G.p[1-m].deck;let n=0;for(;n<2&&d.length;n++)d.pop();log(`${nm(1-m)}の山札が${n}枚捨てられた`)}],
+ p=>['敵ユニット1体の体力を1にする',(m,t)=>{if(t.u&&G.p[t.s].field.includes(t.u)&&t.u.hp>1)t.u.hp=1}],
+ p=>['カードを1枚引き、相手の手札を1枚見る',m=>{draw(m);peek(m)}],
+ p=>['味方全体の攻撃+1（このターン）',m=>mine(m).forEach(u=>{u.tmp++})],
+ p=>['相手の最も気力の高い手札を見抜いて、捨てさせる',m=>discBest(m)],
+ p=>['相手の場のユニット数と同じ枚数、カードを引く（最大2枚）',m=>{const n=Math.min(2,foes(m).length);if(n)draw(m,n)}]
+],
+p:[
+ p=>['次のターンの気力+2',m=>{G.p[m].bonus+=2}],
+ p=>['味方1体の攻撃と体力を入れ替える',(m,t)=>{const u=t.u;if(u&&u.atk>=1){const a=u.atk;u.atk=u.hp;u.hp=a}}],
+ p=>['味方が2体以上いれば、全員に盾',m=>{if(mine(m).length>=2)mine(m).forEach(u=>{u.shield=true})}],
+ p=>['対象の体力+2、ただし対象はこのターン攻撃できない',(m,t)=>{if(t.u){t.u.hp+=2;t.u.atkLeft=0}}],
+ p=>['自分のライフが10以下ならカードを2枚引く',m=>{if(G.p[m].life<=10)draw(m,2)}],
+ p=>['相手のライフ+2、自分の気力+2',m=>{G.p[1-m].life+=2;G.p[m].en+=2}],
+ p=>['次の自分のターン開始時、カードを1枚引き、気力+1',m=>{G.p[m].nd=(G.p[m].nd||0)+1;G.p[m].bonus++}],
+ p=>['対象の攻撃+1（永続）',(m,t)=>{if(t.u)t.u.atk++}],
+ p=>['味方が1体だけなら、その攻撃+2（永続）',(m,t)=>{if(mine(m).length===1&&t.u)t.u.atk+=2}],
+ p=>['対象が倒れたとき、カードを2枚引く',(m,t)=>{if(t.u)t.u.legacy=2}],
+ p=>['次に使う小アルカナのコスト-1',m=>{G.p[m].crm=1}],
+ p=>['次の相手のターンまで、対象が受けるダメージ-1',(m,t)=>{if(t.u)t.u.guard=1}],
+ p=>['味方全体の体力+1、ライフ+2',m=>{mine(m).forEach(u=>{u.hp++});G.p[m].life+=2}],
+ p=>['次のターンの気力+2、ライフ+2',m=>{G.p[m].bonus+=2;G.p[m].life+=2}]
+]};
+const ecost=(c,m)=>{const p=G.p[m];return Math.max(0,c.cost-(p.cr||0)-(c.k==='m'?(p.crm||0):0))};
+function selfDisc(m,rand){const h=G.p[m].hand;if(!h.length)return null;let c;if(rand)c=h.splice(Math.random()*h.length|0,1)[0];else{const mn=Math.min(...h.map(x=>x.cost)),i=h.findIndex(x=>x.cost===mn);c=h.splice(i,1)[0]}log(`${nm(m)}が手札の「${c.n}」を捨てた`);return c}
+function stealCard(m){const h=G.p[1-m].hand;if(!h.length)return;const c=h.splice(Math.random()*h.length|0,1)[0];G.p[m].hand.push(c);log(m===0?`相手の手札から「${c.n}」を奪った`:'あなたの手札が1枚奪われた')}
+function peek(m){if(m!==0)return;const h=G.p[1].hand;if(h.length){const c=rnd(h);log(`相手の手札を見た：「${c.n}${c.rev?'（逆位置）':''}」`)}}
+function discBest(m){const h=G.p[1-m].hand;if(!h.length)return;let bi=0;h.forEach((c,i)=>{if(c.cost>h[bi].cost)bi=i});const c=h.splice(bi,1)[0];log(`${nm(1-m)}の最も気力の高い手札「${c.n}」を見抜いて捨てさせた`)}
+const MINS=[];for(const s of 'wcsp')RK.forEach((r,i)=>{const L=i?i-1:13,Lr=13-L,cf=x=>Math.ceil((x+1)/3),pf=x=>2+Math.floor(x*.4),p=pf(L),pr=pf(Lr);let[d,fx]=NUM[s](p);{const[et,ef]=EXT[s][i](p),f0=fx;d+='＋'+et;fx=(m,t)=>{f0(m,t);ef(m,t)}}const[rd,rg,rt2,rm]=NUMR[s](pr);MINS.push({id:s+i,s,k:'m',n:`${SU[s].n}の${r}`,i,L,cost:cf(L),t:NT[s],d,fx,dmg:s==='w'?p:0,kw:KW[i],kr:KR[i],R:{L:Lr,cost:cf(Lr),t:rt2,d:rd,fx:rg,dmg:rm}})});
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const mkDeck=(m,s,n=15)=>shuf([...m.map(i=>({...MAJ[i]})),...shuf(MINS.filter(c=>s.includes(c.s))).slice(0,n).map(c=>({...c}))]);
 const pl=d=>({life:20,hand:[],deck:d,field:[],grave:[],max:0,en:0,bonus:0});
@@ -242,18 +313,18 @@ function arGo(){clearInterval(AR.ct);ctStop();newGame()}
 function arOver(){clearInterval(AR.ct);ctStop();const n=AR.st+1;sfx('lose');ov(`<div style="text-align:center"><h1>GAME OVER</h1><p>アーケードは第${n}戦で終了です。</p><button class="p" onclick="arStart()">最初からやり直す</button><button onclick="bld(1)">デッキを組み直す</button><button onclick="intro()">タイトルへ</button></div>`)}
 function stEnemyMaj(sc,n){const a=sc.m.map(ix).slice(0,n),su=MAJ[a[0]].su,rest=shuf(MAJ.map((_,i)=>i).filter(i=>!a.includes(i)));rest.sort((x,y)=>(MAJ[y].su===su)-(MAJ[x].su===su));return[...a,...rest].slice(0,n)}
 function newGame(){const sc=ST.on?CH[ST.ch]:null;if(sc)D.dif=sc.dif;const H=['emperor','sun','world','death','strength','chariot','justice','tower','moon','hierophant'].map(id=>MAJ.findIndex(c=>c.id===id)),am=sc?stEnemyMaj(sc,stPick().length):AIP[D.dif].pool?shuf(H).slice(0,D.m.length):shuf([...Array(22).keys()]).slice(0,D.m.length),as=sc?['w','c','s','p']:AIP[D.dif].pool?['w',rnd(['c','s','p'])]:shuf('wcsp'.split('')).slice(0,2),pm=sc?stPick().map(ix):D.m,ps=sc?['w','c','s','p']:D.s;G={p:[pl(mkDeck(pm,ps,sc?stMin(pm.length):15)),pl(mkDeck(am,as,sc?stMin(am.length):15))],turn:0,sel:null,mode:null,view:null,busy:false,over:null,tf:{},log:['対戦開始！']};G.p[1].life=sc&&sc.life?sc.life:AIP[D.dif].life;if(AR.on&&!sc)G.p[1].life+=ARB[AR.st];G.l0=G.p[1].life;draw(0,4);if(sc&&ST.ch===0){const q=G.p[0],d=q.deck.findIndex(c=>c.id==='fool');if(d>=0&&!q.hand.some(c=>c.id==='fool'))q.hand.push(q.deck.splice(d,1)[0])}draw(1,AIP[D.dif].hand);$('#ov').style.display='none';if(sc&&sc.rule)log('ボス固有ルール：'+sc.rule);if(sc&&RH[sc.rid]&&RH[sc.rid].init)RH[sc.rid].init();setBg(sc?sc.s[0]:D.s[0]);startTurn(0)}
-function startTurn(i){const p=G.p[i];p.max=Math.min(10,p.max+1);p.en=p.max+p.bonus+(i===1?AIP[D.dif].en:0);p.bonus=0;p.fl=false;p.field.forEach(u=>{u.atkLeft=u.frozen?0:(u.c.rev&&u.c.id==='chariot'?2:1);u.frozen=false});p.field.slice().forEach(u=>{if(A(u)===0){u.fat=(u.fat||0)+1;log(`${u.c.n}は攻撃力0で消耗（${u.fat}ダメージ）`);dmgU(u,i,u.fat,1)}});draw(i);bossStart(i);G.turn=i;if(i===0&&G.tf)G.tf.tc=(G.tf.tc||0)+1;G.sel=G.mode=null;sfx('turn',i);log(`${nm(i)}のターン（気力${p.en}）`);R()}
-function endTurn(i){G.p[i].field.slice().forEach(u=>{u.tmp=0;const E=(u.c.rev?ENDR:END)[u.c.id];if(E&&G.p[i].field.includes(u)){E(u);log(`${u.c.n}${u.c.rev?'（逆位置）':''}の効果が発動`)}});G.sel=G.mode=null;bossEnd(i);if(G.over)return R();startTurn(1-i);if(G.turn===1&&!G.over)runAI()}
+function startTurn(i){const p=G.p[i];p.max=Math.min(10,p.max+1);p.en=Math.max(0,p.max+p.bonus+(i===1?AIP[D.dif].en:0));p.bonus=0;p.fl=false;p.field.forEach(u=>{u.atkLeft=u.frozen?0:(u.c.rev&&u.c.id==='chariot'?2:1);u.frozen=false;u.guard=0});p.field.slice().forEach(u=>{if(A(u)===0){u.fat=(u.fat||0)+1;log(`${u.c.n}は攻撃力0で消耗（${u.fat}ダメージ）`);dmgU(u,i,u.fat,1)}});draw(i);for(let k=0;k<(p.nd||0);k++)draw(i);p.nd=0;bossStart(i);G.turn=i;if(i===0&&G.tf)G.tf.tc=(G.tf.tc||0)+1;G.sel=G.mode=null;sfx('turn',i);log(`${nm(i)}のターン（気力${p.en}）`);R()}
+function endTurn(i){G.p[i].field.slice().forEach(u=>{u.tmp=0;const E=(u.c.rev?ENDR:END)[u.c.id];if(E&&G.p[i].field.includes(u)){E(u);log(`${u.c.n}${u.c.rev?'（逆位置）':''}の効果が発動`)}});G.p[i].fell=0;G.sel=G.mode=null;bossEnd(i);if(G.over)return R();startTurn(1-i);if(G.turn===1&&!G.over)runAI()}
 function faceDmg(s,n){const p=G.p[s];sfx('hit');p.life-=n;HQ.push({f:s,n});log(`${nm(s)}に${n}ダメージ`);if(p.life<=0&&!G.over)G.over=s?'win':'lose'}
-function dmgU(u,s,n,f){if(!G.p[s].field.includes(u))return;if(u.shield&&!f){u.shield=false;sfx('shield');HQ.push({u:u.id,sh:1,s,rc:rectOf(u.id,s)});log(`${u.c.n}の盾が攻撃を防いだ`);return}if((u.c.id==='strength'&&!u.c.rev||(s===1&&rid()==='patience'))&&!f)n=Math.max(0,n-1);u.hp-=n;HQ.push({u:u.id,n,s,rc:rectOf(u.id,s)});if(u.hp<=0&&s===1&&rid()==='rebirth'&&!G.rb){G.rb=1;u.hp=1;sfx('shield');RL(`${u.c.n}は体力1で踏みとどまった`);return}if(u.hp>0)sfx('hit');if(u.hp<=0){sfx('die');G.p[s].field=G.p[s].field.filter(x=>x!==u);G.p[s].grave.push(u.c);log(`${u.c.n}（${nm(s)}）が倒れた`);if(u.c.id==='tower'){if(u.c.rev){G.p[s].field.forEach(x=>{x.shield=true});log('塔の逆位置：味方全体に盾')}else{G.p[1-s].field.slice().forEach(x=>dmgU(x,1-s,2));faceDmg(1-s,2)}}}}
+function dmgU(u,s,n,f){if(!G.p[s].field.includes(u))return;if(u.shield&&!f){u.shield=false;sfx('shield');HQ.push({u:u.id,sh:1,s,rc:rectOf(u.id,s)});log(`${u.c.n}の盾が攻撃を防いだ`);return}if((u.c.id==='strength'&&!u.c.rev||u.guard||(s===1&&rid()==='patience'))&&!f)n=Math.max(0,n-1);u.hp-=n;HQ.push({u:u.id,n,s,rc:rectOf(u.id,s)});if(u.hp<=0&&s===1&&rid()==='rebirth'&&!G.rb){G.rb=1;u.hp=1;sfx('shield');RL(`${u.c.n}は体力1で踏みとどまった`);return}if(u.hp>0)sfx('hit');if(u.hp<=0){sfx('die');G.p[s].field=G.p[s].field.filter(x=>x!==u);G.p[s].grave.push(u.c);G.p[s].fell=(G.p[s].fell||0)+1;if(u.legacy)draw(s,u.legacy);log(`${u.c.n}（${nm(s)}）が倒れた`);if(u.c.id==='tower'){if(u.c.rev){G.p[s].field.forEach(x=>{x.shield=true});log('塔の逆位置：味方全体に盾')}else{G.p[1-s].field.slice().forEach(x=>dmgU(x,1-s,2));faceDmg(1-s,2)}}}}
 function hit(t,n){t.u?dmgU(t.u,t.s,n):faceDmg(t.s,n)}
 function spawn(m,c,hp){const u={id:++uid,c,s:m,atk:c.atk,hp:hp||c.hp,tmp:0,atkLeft:c.id==='chariot'?(c.rev?2:1):(m===1&&rid()==='charge'?1:0),shield:m===1&&rid()==='perfect',frozen:false};G.p[m].field.push(u);return u}
 function attack(s,u,t){u.atkLeft--;if(s===0&&G.tf)G.tf.atk=1;sfx('atk');if(u.c.rev&&u.c.id==='chariot'){log('戦車の暴走：自分に1ダメージ');faceDmg(s,1)}const a=A(u);if(!t.u){log(`${u.c.n}が攻撃`);faceDmg(t.s,a)}else{const d=t.u,b=A(d);log(`${u.c.n}が${d.c.n}を攻撃`);dmgU(d,t.s,a);dmgU(u,s,b)}}
-function play(m,i,t){const p=G.p[m],c=p.hand[i];p.en-=c.cost;p.hand.splice(i,1);if(m===0&&G.tf){if(c.k==='M')G.tf.sum=1;else G.tf.sp=1}
+function play(m,i,t){const p=G.p[m],c=p.hand[i];p.en-=ecost(c,m);p.cr=0;if(c.k==='m')p.crm=0;p.hand.splice(i,1);if(m===0&&G.tf){if(c.k==='M')G.tf.sum=1;else G.tf.sp=1}
  if(c.k==='M'){const he=m===0?document.querySelectorAll('.hand .c')[i]:null;const u=spawn(m,c);G.mv={m,u:u.id,src:he&&he.getBoundingClientRect?{rect:he.getBoundingClientRect(),node:he.cloneNode(true)}:null};setTimeout(()=>{sfx('summon');fxPlay(c,m)},RM()?0:MV);const ju=p.jn===undefined?(c.rev?22:-1):p.jn,big=c.rev?c.no===ju-1:c.no===ju+1,sm=c.rev?c.no<ju:c.no>ju;if(big){u.atk+=2;u.hp+=2;log(`✦${c.rev?'逆行の':''}旅路ボーナス（大）：攻撃+2・体力+2`)}else if(sm){u.atk+=1;log(`✦${c.rev?'逆行の':''}旅路ボーナス（小）：攻撃+1`)}p.jn=c.no;log(`${nm(m)}が「${c.n}${c.rev?'（逆位置）':''}」を召喚`);log(`${c.n}「${QT[c.id]}」`);const fn=(c.rev?ONR:ON)[c.id];if(fn)fn(m,u)}
  else{log(`${nm(m)}が「${c.n}${c.rev?'（逆位置）':''}」を使用`);sfx('spell',c.s);fxPlay(c,m);const[md,ef,eo]=elmod(m,c);MOD=md;if(ef||eo)log(`元素相性：友好${ef}・対立${eo} → 効果${md>=0?'+':''}${md}`);c.fx(m,t);MOD=0;p.field.slice().forEach(u=>{if(u.c.su===c.s&&p.field.includes(u)){CB[u.c.cb][1](u);log(`✦相性：${u.c.n}×${SU[c.s].n} ${CB[u.c.cb][0]}`);sfx('combo')}})}
  G.sel=G.mode=null;if(m===0&&!SEEN.has(c.id)){SEEN.add(c.id);G.view=c;log(`📖初めて使用：${c.n}（下の解説を確認）`)}else if(m===0)G.view=null}
-function canUse(c){const p=G.p[0],e=G.p[1];if(G.turn||G.busy||G.over||c.cost>p.en)return false;if(c.k==='M')return p.field.length<4;return c.t==='self'||c.t==='en'||(c.t==='ally'&&(c.rdy?p.field.some(u=>u.atkLeft>0):p.field.length>0))||(c.t==='eu'&&e.field.length>0)}
+function canUse(c){const p=G.p[0],e=G.p[1];if(G.turn||G.busy||G.over||ecost(c,0)>p.en)return false;if(c.k==='M')return p.field.length<4;return c.t==='self'||c.t==='en'||(c.t==='ally'&&(c.rdy?p.field.some(u=>u.atkLeft>0):p.field.length>0))||(c.t==='eu'&&e.field.length>0)}
 function isT(s,u){if(G.mode==='atk')return s===1&&(u||!G.p[1].field.length);if(G.mode!=='card')return false;const c=G.p[0].hand[G.sel.i],t=c.t;return t==='ally'?(s===0&&!!u&&(!c.rdy||u.atkLeft>0)):t==='eu'?(s===1&&!!u):t==='en'?s===1:false}
 function info(c,u,full){if(!c)return'<i>カードをタップするとキーワードと効果が表示されます。詳しい解説は「図鑑」で見られます。</i>';
  const ic=`<span style="float:right;margin:0 0 4px 8px">${art(c,64)}</span>`;
@@ -261,7 +332,7 @@ function info(c,u,full){if(!c)return'<i>カードをタップするとキーワ�
  const s=SU[c.s],ck=c.rev===undefined&&c.R;
  return`${ic}<b>${c.n}${c.rev===undefined?'':c.rev?'（逆位置）':'（正位置）'}</b> 気力${c.cost}／強さ${c.L+1}/14<br>キーワード：${c.rev?c.kr.join('・'):c.kw.join('・')}${ck?`（逆位置：${c.kr.join('・')}）`:''}<br>${ck?'正位置：':''}${c.d}<br>${ck?`逆位置（気力${c.R.cost}／強さ${c.R.L+1}/14）：${c.R.d}<br>`:''}元素：${s.el}（${SK[c.s]}）${full?`<br>${s.n}は四元素の「${s.el}」に対応（伝統的な解釈の一つ）。役割：${s.role}。<br><i>※強さは2＜…＜10＜ペイジ＜ナイト＜クイーン＜キング＜エース。逆位置は序列が反転します。効果は独自設計です。</i>`:''}`}
 function tutH(){if(!ST.on||ST.ch!==0||!G.tf||G.over)return'';const me=G.p[0],f=G.tf,tc=f.tc||0,s=G.sel,h0=s&&s.k==='h'?me.hand[s.i]:null;let t;
- const tips=['気力は毎ターン1ずつ増えます（最大10）。手札と相談して使いましょう。','大アルカナを「前に召喚した番号+1」の順で出すと、旅路ボーナスで強くなります。画面下の「旅路 次:」が、次に出すと大ボーナスになる番号です（愚者0の次は魔術師I）。','ピンクの背景で「逆位置」と書かれた小アルカナは、強さの序列が反転し、効果が変わります。カードをタップして内容を確認しましょう。','小アルカナには元素相性があります。場の大アルカナと友好の元素なら効果+1、対立なら-1。同じ相性スートなら✦相性も発動します。','「図鑑」で全カードの効果を確認できます。苦しいときは「投了」もできます。相手のライフを0にすれば勝ちです。'];
+ const tips=['気力は毎ターン1ずつ増えます（最大10）。手札と相談して使いましょう。','大アルカナを「前に召喚した番号+1」の順で出すと、旅路ボーナスで強くなります。画面下の「旅路」には、持っている大アルカナのうち直前に出した番号の次に来る番号が1つ表示され、金色なら、それを次に出すと大ボーナスになります（愚者0の次は魔術師I）。','ピンクの背景で「逆位置」と書かれた小アルカナは、強さの序列が反転し、効果が変わります。カードをタップして内容を確認しましょう。','小アルカナには元素相性があります。場の大アルカナと友好の元素なら効果+1、対立なら-1。同じ相性スートなら✦相性も発動します。','「図鑑」で全カードの効果を確認できます。苦しいときは「投了」もできます。相手のライフを0にすれば勝ちです。'];
  if(G.turn===1||G.busy)t='相手のターンです。相手の召喚や攻撃は、上のログに出ます。終わるとあなたのターンになります。';
  else if(G.mode==='atk')t='攻撃先をタップします。光っている相手のユニット、または相手のライフ（上のバー）を選びましょう。相手のユニットがいる間は、ライフは狙えません。';
  else if(G.mode==='card')t='効果の対象をタップして選びます。光っているところが対象です。';
@@ -283,10 +354,11 @@ function hitFx(){const q=HQ.splice(0);if(!q.length||RM())return;const f=$('#fx')
   if(h.u!==undefined&&!h.sh){const sl=document.createElement('div');sl.style.cssText=`position:fixed;left:${cx-40}px;top:${cy-2}px;width:80px;height:4px;border-radius:2px;background:#fff;box-shadow:0 0 8px ${col};pointer-events:none;transform:rotate(-35deg)`;f.appendChild(sl);if(sl.animate)sl.animate([{transform:'rotate(-35deg) scaleX(0)',opacity:1},{transform:'rotate(-35deg) scaleX(1.2)',opacity:1,offset:.4},{transform:'rotate(-35deg) scaleX(1.2)',opacity:0}],{duration:360,easing:'ease-out'});setTimeout(()=>sl.remove(),380)}
   const t=document.createElement('div');t.textContent=h.sh?'防いだ':'-'+h.n;t.style.cssText=`position:fixed;left:${cx}px;top:${cy-8}px;transform:translateX(-50%);font-size:${h.sh?16:22}px;font-weight:800;color:#fff;text-shadow:0 0 6px ${col},0 0 2px #000,0 2px 4px #000;pointer-events:none;white-space:nowrap`;f.appendChild(t);
   if(t.animate)t.animate([{transform:'translate(-50%,0) scale(.6)',opacity:0},{transform:'translate(-50%,-14px) scale(1.25)',opacity:1,offset:.25},{transform:'translate(-50%,-44px) scale(1)',opacity:0}],{duration:900,easing:'ease-out'});setTimeout(()=>t.remove(),920)})}
+function jnList(p){const l=p.jn===undefined?-1:p.jn,a=[...p.hand,...p.deck].filter(c=>c.k==='M').map(c=>c.no).sort((x,y)=>x-y);if(!a.length)return'なし';const n=a.find(x=>x>l)??a[0];return n===l+1?`<b style="color:var(--gold)">${MAJ[n].r}</b>`:MAJ[n].r}
 const enDots=p=>{const n=Math.max(p.max,p.en);let s='';for(let i=0;i<n;i++)s+=`<i class="${i<p.en?'on':''}"></i>`;return`<div class="en" role="img" aria-label="気力 ${p.en}/${p.max}">${s}</div>`};
 function R(){const[me,ai]=G.p,my=!G.turn&&!G.busy&&!G.over;
- const un=(u,s)=>`<div class="u ${u.c.rev?'rv':''} ${u.atkLeft<=0?'tp':''} ${isT(s,u)?'tg':''} ${G.sel&&G.sel.k==='u'&&G.sel.id===u.id?'sel':''} ${s===0&&u.atkLeft>0&&my?'rdy':''}" data-a="unit" data-s="${s}" data-id="${u.id}"${u.id===MVU?' style="opacity:0"':''}>${art(u.c,34)}<b>${u.c.n}</b><span class="r">${u.c.r}</span><span class="st">攻${A(u)} 体${u.hp}</span><span class="fl">${u.c.rev?'逆位置 ':''}${u.shield?'盾 ':''}${u.frozen?'封印 ':''}${A(u)===0?'消耗 ':''}${u.atkLeft>1?'連撃':''}</span></div>`;
- const hc=me.hand.map((c,i)=>`<div class="c ${c.rev?'rv':''} ${G.sel&&G.sel.k==='h'&&G.sel.i===i?'sel':''} ${canUse(c)?'':'no'}" style="--sc:${c.k==='M'?'#d4b062':SU[c.s].c}${c.fu>Date.now()?';opacity:0':''}" data-a="hand" data-i="${i}"><span class="stt">${c.k==='M'?`<span style="color:#b3402f">${c.atk}</span>/<span style="color:#2f7a45">${c.hp}</span>`:''}</span>${art(c,38)}<span class="nm" style="${c.rev?'color:#8a2d4a':''}">${c.n}${c.rev?'<br>逆位置':''}</span><span class="kw">${c.k==='M'?(c.rev?c.kr:c.mean).split('・')[0]:(c.rev?c.kr:c.kw)[0]}</span><span class="co">${c.cost}</span></div>`).join('');
+ const un=(u,s)=>`<div class="u ${u.c.rev?'rv':''} ${u.atkLeft<=0?'tp':''} ${isT(s,u)?'tg':''} ${G.sel&&G.sel.k==='u'&&G.sel.id===u.id?'sel':''} ${s===0&&u.atkLeft>0&&my?'rdy':''}" data-a="unit" data-s="${s}" data-id="${u.id}"${u.id===MVU?' style="opacity:0"':''}>${art(u.c,34)}<b>${u.c.n}</b><span class="arc">${u.c.r}</span><span class="st">攻${A(u)} 体${u.hp}</span><span class="fl">${u.c.rev?'逆位置 ':''}${u.shield?'盾 ':''}${u.frozen?'封印 ':''}${A(u)===0?'消耗 ':''}${u.atkLeft>1?'連撃':''}</span></div>`;
+ const hc=me.hand.map((c,i)=>`<div class="c ${c.rev?'rv':''} ${G.sel&&G.sel.k==='h'&&G.sel.i===i?'sel':''} ${canUse(c)?'':'no'}" style="--sc:${c.k==='M'?'#d4b062':SU[c.s].c}${c.fu>Date.now()?';opacity:0':''}" data-a="hand" data-i="${i}">${c.k==='M'?`<span class="arc">${c.r}</span>`:''}<span class="stt">${c.k==='M'?`<span style="color:#b3402f">${c.atk}</span>/<span style="color:#2f7a45">${c.hp}</span>`:''}</span>${art(c,38)}<span class="nm" style="${c.rev?'color:#8a2d4a':''}">${c.n}${c.rev?'<br>逆位置':''}</span><span class="kw">${c.k==='M'?(c.rev?c.kr:c.mean).split('・')[0]:(c.rev?c.kr:c.kw)[0]}</span><span class="co">${ecost(c,0)}</span></div>`).join('');
  let v=null,vu=null;if(G.sel&&G.sel.k==='h')v=me.hand[G.sel.i];else if(G.view){v=G.view.c||G.view;vu=G.view.c?G.view:null}
  const h0=G.sel&&G.sel.k==='h'?me.hand[G.sel.i]:null;
  let b=`<button data-a="dex">図鑑</button><button data-a="resign" ${my?'':'disabled'}>投了</button><button class="p" data-a="end" ${my?'':'disabled'}>ターン終了</button>`;
@@ -297,7 +369,7 @@ function R(){const[me,ai]=G.p,my=!G.turn&&!G.busy&&!G.over;
  <div class="field">${ai.field.map(u=>un(u,1)).join('')}</div>
  <div class="log"><span class="snd">${sb()}</span>${G.log.slice(-3).join('<br>')}</div>
  <div class="field">${me.field.map(u=>un(u,0)).join('')}</div>
- ${enDots(me)}<div class="bar ${G.turn?'':'t'}" data-fs="0"><span>あなた ♥${me.life}</span><small>山札${me.deck.length}／旅路 次:${(n=>n<22?MAJ[n].r:'完')((me.jn===undefined?-1:me.jn)+1)}${G.mode?'　対象を選択':''}</small></div>
+ ${enDots(me)}<div class="bar ${G.turn?'':'t'}" data-fs="0"><span>あなた ♥${me.life}</span><small>山札${me.deck.length}／旅路 ${jnList(me)}${G.mode?'　対象を選択':''}</small></div>
  <div class="info">${tutH()}${info(v,vu)}</div><div class="hand">${hc}</div><div class="btns">${b}</div>`;
 
  {const h2=$('.hand');if(h2)h2.scrollLeft=hsl}
@@ -314,7 +386,7 @@ function moveIn(te,mv){const f=$('#fx');if(!f||RM())return;const b=te.getBoundin
 function flyIn(e,k,c){const f=$('#fx');if(!f||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;const h=e.parentElement;if(h){const hr=h.getBoundingClientRect(),er=e.getBoundingClientRect();if(er.right>hr.right)h.scrollLeft+=er.right-hr.right+8}const r=e.getBoundingClientRect();if(r.right<=0||r.left>=innerWidth)return;const d=k*130,dur=520,n=e.cloneNode(true);n.classList.add('fly');n.classList.remove('sel','no');n.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;--dx:${innerWidth-r.left+40}px;animation-delay:${d}ms;--sc:${e.style.getPropertyValue('--sc')}`;f.appendChild(n);c.fu=Date.now()+d+dur;e.style.opacity='0';setTimeout(()=>{n.remove();document.querySelectorAll('.hand .c').forEach(x=>{x.style.opacity=''})},d+dur+40)}
 function ov(h,top){const o=$('#ov');o.style.display='flex';o.style.alignItems=top?'flex-start':'center';o.style.overflow=top?'auto':'';o.innerHTML=h}
 function end(){if(!G.sd){G.sd=1;if(!(ST.on&&G.over==='win'))sfx(G.over)}if(ST.on)return stEnd();if(AR.on)return arEnd();ov(`<div><h1>${G.over==='win'?'勝利':'敗北'}</h1>${G.over==='win'?'相手のライフを0にしました。':G.resigned?'投了しました。':'ライフが0になりました。'}<button class="p" onclick="newGame()">同じデッキでもう一度</button><button onclick="build()">デッキを組み直す</button></div>`)}
-function intro(pg){stLeave();D.ar=0;pg=pg||1;ov(pg===1?`<div><h1>タロット・デュエル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br>・デッキは大アルカナ5〜8枚＋選んだ2スートの小アルカナ15枚（相手の大アルカナも同じ枚数）<br>・手札をタップ→「使う／召喚する」<br>・攻撃：緑枠の自分のユニットをタップ→相手を選ぶ<br>・相手のユニットがいる間は、ライフへ直接攻撃できません<br>・ユニットは召喚直後や攻撃後は横向き（タップ）になり、次の自分のターンに起き上がります<br>・攻撃力が0のユニットは、自分のターン開始時に1、2、3…と増えるダメージを受けます（ファティーグ）<br><p style="text-align:center">1 / 2</p><button class="p" onclick="intro(2)">次へ</button><button onclick="stMenu()">ストーリーモード（全22章）</button><button onclick="bld(1)">アーケードモード（全5戦）</button><button onclick="sndMode()">サウンドモード</button><button onclick="bld(0)">ルール説明を飛ばしてデッキを組む</button></div>`:`<div><h1>ルール（続き）</h1>・山札が尽きた状態でカードを引くと、ライフに1、2、3…と増えるダメージを受けます<br>・気力は毎ターン1ずつ増えます（最大10）<br>・小アルカナは、引いた時に約4割が逆位置になり、効果が変わります<br>・小アルカナの強さは 2＜…＜10＜ペイジ＜ナイト＜クイーン＜キング＜エース。逆位置は序列が反転します（エースが最弱、2が最強）<br>・元素相性：場の大アルカナと小アルカナの元素が友好（火と風・水と地）なら効果+1、対立（火と水・風と地）なら-1（最大±2）<br>・旅路ボーナス：大アルカナを前に召喚した番号+1の順で出すと攻撃+2・体力+2、番号が大きくなる順なら攻撃+1（愚者0から始めると大ボーナス）<br>・大アルカナと同じ相性スートの小アルカナを使うと✦相性が発動します<br>・アーケードモード：自分のデッキで連続5戦。弱い相手から段々強くなり、負けるとそこで終了です<br><p style="text-align:center">2 / 2</p><p>${sb()}</p><button class="p" onclick="bld(0)">デッキを組む</button><button onclick="stMenu()">ストーリーモード（全22章）</button><button onclick="bld(1)">アーケードモード（全5戦）</button><button onclick="sndMode()">サウンドモード</button><button onclick="intro(1)">前へ</button></div>`,1)}
+function intro(){stLeave();D.ar=0;ov(`<div><h1>タロット・デュエル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br><p>${sb()}</p><button class="p" onclick="bld(0)">フリー対戦（デッキを組む）</button><button onclick="stMenu()">ストーリーモード（全22章）</button><button onclick="bld(1)">アーケードモード（全5戦）</button><button onclick="sndMode()">サウンドモード</button><button onclick="manual(1)">マニュアル（遊び方）</button></div>`,1)}function manual(pg){pg=pg||1;ov(pg===1?`<div><h1>マニュアル</h1>タロット全78枚を使う対戦カードゲームです。大アルカナ22枚はユニット、小アルカナ56枚は魔法・支援として使います。<br><br>・デッキは大アルカナ5〜8枚＋選んだ2スートの小アルカナ15枚（相手の大アルカナも同じ枚数）<br>・手札をタップ→「使う／召喚する」<br>・攻撃：緑枠の自分のユニットをタップ→相手を選ぶ<br>・相手のユニットがいる間は、ライフへ直接攻撃できません<br>・ユニットは召喚直後や攻撃後は横向き（タップ）になり、次の自分のターンに起き上がります<br>・攻撃力が0のユニットは、自分のターン開始時に1、2、3…と増えるダメージを受けます（ファティーグ）<br><p style="text-align:center">1 / 2</p><button class="p" onclick="manual(2)">次へ</button><button onclick="intro()">タイトルへ戻る</button></div>`:`<div><h1>マニュアル（続き）</h1>・山札が尽きた状態でカードを引くと、ライフに1、2、3…と増えるダメージを受けます<br>・気力は毎ターン1ずつ増えます（最大10）<br>・小アルカナは、引いた時に約4割が逆位置になり、効果が変わります<br>・小アルカナの強さは 2＜…＜10＜ペイジ＜ナイト＜クイーン＜キング＜エース。逆位置は序列が反転します（エースが最弱、2が最強）<br>・元素相性：場の大アルカナと小アルカナの元素が友好（火と風・水と地）なら効果+1、対立（火と水・風と地）なら-1（最大±2）<br>・旅路ボーナス：大アルカナを前に召喚した番号+1の順で出すと攻撃+2・体力+2、番号が大きくなる順なら攻撃+1（愚者0から始めると大ボーナス）<br>・大アルカナと同じ相性スートの小アルカナを使うと✦相性が発動します<br>・アーケードモード：自分のデッキで連続5戦。弱い相手から段々強くなり、負けるとそこで終了です<br><p style="text-align:center">2 / 2</p><button onclick="manual(1)">前へ</button><button class="p" onclick="intro()">タイトルへ戻る</button></div>`,1)}
 function build(){stLeave();const ok=D.m.length>=5&&D.m.length<=FREE_M&&D.s.length===2;ov(`<div><h1>${D.ar?'アーケードモード（全5戦）':'デッキ構築'}</h1>${D.ar?'<p>自分のデッキで連続5戦。弱い相手から段々強くなります。負けるとそこで終了です。</p>':'<p>難易度</p>'}<div class="chips"${D.ar?' style="display:none"':''}>${['弱い','普通','強い'].map((n,i)=>`<span class="ch ${D.dif===i?'on':''}" onclick="D.dif=${i};build()">${n}</span>`).join('')}</div><p>大アルカナを5〜${FREE_M}枚、小アルカナのスートを2つ選びます。</p><div class="chips">${MAJ.map((c,i)=>`<span class="ch ${D.m.includes(i)?'on':''}" onclick="tg('m',${i})">${c.r} ${c.n}</span>`).join('')}</div><div class="chips">${Object.keys(SU).map(s=>`<span class="ch ${D.s.includes(s)?'on':''}" onclick="tg('s','${s}')">${SU[s].n}</span>`).join('')}</div><p>選択：大アルカナ${D.m.length}/${FREE_M}（5枚以上）・スート${D.s.length}/2</p><div class="dx">${D.v||'<i>カードをタップすると解説が出ます。</i>'}</div><button onclick="auto()">おまかせで選ぶ</button><button onclick="dex('build')">カード図鑑</button><button class="p" ${ok?'':'disabled'} onclick="${D.ar?'arStart()':'newGame()'}">${D.ar?'アーケード開始':'対戦開始'}</button><button onclick="stMenu()">ストーリーモード（全22章）</button></div>`,1)}
 const FREE_M=8;
 function tg(k,x){const a=D[k],n=k==='m'?FREE_M:2,i=a.indexOf(x);if(i>=0)a.splice(i,1);else if(a.length<n)a.push(x);D.v=k==='m'?info(MAJ[x]):`<b>${SU[x].n}</b>：${SU[x].el}の象徴。${SU[x].role}。`;build()}
@@ -323,7 +395,7 @@ function dex(b){DB=b;ov(`<div><h1>カード図鑑</h1><p><b>大アルカナ（22
 function closeDex(){DB==='build'?build():$('#ov').style.display='none'}
 function fxPlay(c,m){const f=$('#fx');if(!f)return;const M=c.k==='M',col=M?(c.rev?'#9b59c4':'#d4b062'):SU[c.s].c,d=document.createElement('div'),N=M?24:16,R=(a,b)=>a+Math.random()*(b-a);d.className='fx '+(M?'fxM':'fxm fx'+c.s);d.style.setProperty('--fc',col);d.style.setProperty('--dx',m?1:-1);
  let pt='';for(let i=0;i<N;i++)pt+=`<i class="pt" style="--a:${i*360/N}deg;--r:${R(110,260)}px;--x:${R(-130,130)}px;--y:${R(-150,150)}px;--y2:${R(-10,90)}px;--dl:${R(0,.25)}s"></i>`;
- d.innerHTML=`<i class="fl"></i><i class="ring"></i><i class="ring r2"></i>${M?'<i class="ray"></i>':''}${pt}<div class="fcard">${art(c,M?112:84)}<b>${c.n}</b>${M?`<small>${c.r}${c.rev?'・逆位置':''}</small>`:c.rev?'<small>逆位置</small>':''}</div><div class="fban">${M?(c.rev?'逆位置・召喚':'召喚'):SU[c.s].n+(c.rev?'・逆位置':'')}</div>${M?`<div class="fq"><small>${c.n}</small><br>「${QT[c.id]}」</div>`:''}`;
+ d.innerHTML=`<i class="ffl"></i><i class="ring"></i><i class="ring r2"></i>${M?'<i class="ray"></i>':''}${pt}<div class="fcard">${art(c,M?112:84)}<b>${c.n}</b>${M?`<small>${c.r}${c.rev?'・逆位置':''}</small>`:c.rev?'<small>逆位置</small>':''}</div><div class="fban">${M?(c.rev?'逆位置・召喚':'召喚'):SU[c.s].n+(c.rev?'・逆位置':'')}</div>${M?`<div class="fq"><small>${c.n}</small><br>「${QT[c.id]}」</div>`:''}`;
  f.appendChild(d);setTimeout(()=>d.remove(),1500)}
 function askResign(){ov(`<div><h1>投了しますか？</h1>投了すると、この対戦は負けになります。<button class="p" onclick="doResign()">投了する</button><button onclick="$('#ov').style.display='none'">続ける</button></div>`)}
 function doResign(){G.over='lose';G.resigned=true;log('あなたは投了した');$('#ov').style.display='none';R()}
